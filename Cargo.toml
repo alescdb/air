@@ -7,6 +7,7 @@ edition = "2021"
 strip = true
 
 [dependencies]
+llama_cpp_rs = "0.3.0"
 openai = { version = "1.0.0-alpha.13", features = ["rustls", "reqwest"] }
 serde = { version = "1.0.193", features = ["derive", "rc", "alloc"] }
 tokio = { version = "1.35.1", features = ["full"] }
@@ -15,3 +16,4 @@ getopts = "0.2.21"
 termimad = "0.26.1"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = { version = "5.0.1", features = [] }
+async-trait = "0.1.75"

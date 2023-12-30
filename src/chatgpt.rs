@@ -1,7 +1,9 @@
+use async_trait::async_trait;
 use openai::{
     chat::{ChatCompletion, ChatCompletionMessage, ChatCompletionMessageRole},
     set_key,
 };
+use crate::ichat::IChat;
 
 pub struct ChatGPT {
     pub apikey: String,
@@ -9,25 +11,21 @@ pub struct ChatGPT {
     pub system: Option<String>,
 }
 
-impl ChatGPT {
-    pub fn new(api_key: String) -> Self {
-        set_key(api_key.clone());
-        return ChatGPT {
-            apikey: api_key,
-            model: "gpt-4-1106-preview".to_string(),
-            system: None,
-        };
+#[async_trait]
+impl IChat for ChatGPT {
+    fn get_name(&mut self) -> &str {
+        return "chatgpt";
     }
 
-    pub fn set_system(&mut self, system: String) {
+    fn set_system(&mut self, system: String) {
         self.system = Some(system)
     }
 
-    pub fn set_model(&mut self, model: String) {
+    fn set_model(&mut self, model: String) {
         self.model = model
     }
 
-    pub async fn chat(&mut self, prompt: String, history: Option<Vec<ChatCompletionMessage>>) -> String {
+    async fn chat(&mut self, prompt: String, history: Option<Vec<ChatCompletionMessage>>) -> String {
         let mut messages = vec![];
         if self.system != None && self.system.is_some() {
             messages.push(ChatCompletionMessage {
@@ -56,5 +54,16 @@ impl ChatGPT {
             .unwrap();
         let answer = completion.choices.first().unwrap().message.clone();
         return answer.content.clone().unwrap();
+    }
+}
+
+impl ChatGPT {
+    pub fn new(apikey: String) -> Self {
+        set_key(apikey.clone());
+        return ChatGPT {
+            apikey,
+            model: "gpt-4-1106-preview".to_string(),
+            system: None,
+        };
     }
 }

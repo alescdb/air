@@ -5,6 +5,12 @@ use std::io::ErrorKind;
 use crate::path::{FileInfo, get_config_path};
 
 const EMPTY_KEY: &str = "<enter your openai api key here>";
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LLamaSetup {
+    pub enable: bool,
+    pub model: String,
+}
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Setup {
     pub apikey: String,
@@ -12,6 +18,7 @@ pub struct Setup {
     pub system: String,
     pub markdown: bool,
     pub expiration: u32,
+    pub llama: LLamaSetup,
 }
 
 pub fn load_setup() -> Result<Setup, std::io::Error> {
@@ -43,6 +50,10 @@ fn write_setup(config: &FileInfo) {
         system: "Your are a Linux assistant and a coder.".to_string(),
         markdown: true,
         expiration: 600,
+        llama: LLamaSetup {
+            enable: false,
+            model: "/path/to/model".to_string()
+        },
     }).expect("to_string_pretty() failed");
 
     fs::write(&config.path, serialized.as_str())
