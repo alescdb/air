@@ -1,0 +1,17 @@
+[package]
+name = "air"
+version = "0.1.0"
+edition = "2021"
+
+[profile.release]
+strip = true
+
+[dependencies]
+openai = { version = "1.0.0-alpha.13", features = ["rustls", "reqwest"] }
+serde = { version = "1.0.193", features = ["derive", "rc", "alloc"] }
+tokio = { version = "1.35.1", features = ["full"] }
+serde_json = "1.0.108"
+getopts = "0.2.21"
+termimad = "0.26.1"
+chrono = { version = "0.4", features = ["serde"] }
+dirs = { version = "5.0.1", features = [] }
