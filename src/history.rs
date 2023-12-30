@@ -7,6 +7,7 @@ use crate::path::get_config_path;
 #[derive(Serialize, Deserialize, Debug)]
 pub struct Message {
     date: NaiveDateTime,
+    chat: String,
     user: String,
     assistant: String,
 }
@@ -28,12 +29,13 @@ impl History {
             expiration,
         };
     }
-    pub fn add(&mut self, user: &str, assistant: &str) {
+    pub fn add(&mut self, chat: &str, user: &str, assistant: &str) {
         let local_time = Local::now();
         let naive_time: NaiveDateTime = local_time.naive_local();
 
         self.messages.push(Message {
             date: naive_time,
+            chat: chat.to_string(),
             user: user.to_string(),
             assistant: assistant.to_string(),
         });

@@ -4,6 +4,8 @@ mod options;
 mod history;
 mod path;
 mod logs;
+mod llama;
+mod ichat;
 
 use crate::logs::*;
 use termimad::*;
@@ -12,6 +14,8 @@ use crate::config::{display_setup, load_setup, Setup};
 use crate::options::{display_options, parse_command_line};
 use crate::history::History;
 use termimad::crossterm::style::Stylize;
+use crate::ichat::{IChat};
+use crate::llama::LLamaChat;
 
 
 fn display(markdown: bool, content: String) {
@@ -24,6 +28,13 @@ fn display(markdown: bool, content: String) {
 }
 
 
+fn get_chat(setup: &Setup) -> Box<dyn IChat> {
+    if setup.llama.enable {
+        return Box::new(LLamaChat::new(setup.llama.model.clone()));
+    }
+    return Box::new(ChatGPT::new(setup.apikey.clone()));
+}
+
 #[tokio::main]
 async fn main() -> Result<(), Error> {
     let setup: Setup = match load_setup() {
@@ -34,8 +45,8 @@ async fn main() -> Result<(), Error> {
         }
     };
     let options = parse_command_line(setup.markdown);
-    let mut chatgpt = ChatGPT::new(setup.apikey.clone());
     let mut history = History::new(setup.expiration);
+    let mut chatgpt = get_chat(&setup);
 
     unsafe {
         VERBOSE = if cfg!(debug_assertions) { true } else { options.verbose };
@@ -76,7 +87,7 @@ async fn main() -> Result<(), Error> {
     let answer = chatgpt.chat(options.prompt.to_string(), Some(history.get_completions())).await;
     display(options.markdown, answer.clone());
 
-    history.add(&*options.prompt, &*answer.clone());
+    history.add(chatgpt.get_name(), &*options.prompt, &*answer.clone());
     history.save();
 
     Ok(())
