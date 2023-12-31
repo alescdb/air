@@ -1,3 +1,4 @@
+use crate::logs::*;
 use crate::{ichat::IChat, verbose};
 use async_trait::async_trait;
 use llama_cpp_rs::{
@@ -5,12 +6,12 @@ use llama_cpp_rs::{
     LLama,
 };
 use openai::chat::ChatCompletionMessage;
-use crate::logs::*;
 
 pub struct LLamaChat {
     pub model: String,
     pub system: Option<String>,
     pub prompt_template: Option<String>,
+    main_gpu: String,
 }
 
 #[async_trait]
@@ -32,7 +33,10 @@ impl IChat for LLamaChat {
         prompt: String,
         _history: Option<Vec<ChatCompletionMessage>>,
     ) -> String {
-        let model_options: ModelOptions = ModelOptions::default();
+        let model_options: ModelOptions = ModelOptions {
+            main_gpu: self.main_gpu.clone(),
+            ..Default::default()
+        };
 
         let llama: LLama = LLama::new(self.model.clone(), &model_options).unwrap();
 
@@ -40,6 +44,7 @@ impl IChat for LLamaChat {
             debug_mode: false,
             temperature: 0.2,
             tokens: 512,
+            main_gpu: self.main_gpu.clone(),
             ..Default::default()
         };
         let prompt_fmt = self.get_prompt(prompt);
@@ -68,11 +73,12 @@ impl LLamaChat {
             .replace("{prompt}", &prompt)
             .to_string();
     }
-    pub fn new(model: String, prompt_template: Option<String>) -> Self {
+    pub fn new(model: String, prompt_template: Option<String>, main_gpu: String) -> Self {
         return LLamaChat {
             model,
             system: None,
             prompt_template,
+            main_gpu,
         };
     }
 }

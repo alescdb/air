@@ -20,6 +20,7 @@ pub struct Setup {
     pub system: String,
     pub markdown: bool,
     pub expiration: u32,
+    pub main_gpu: String,
     pub local: Vec<LLamaSetup>,
 }
 
@@ -52,6 +53,7 @@ fn write_setup(config: &FileInfo) {
         model: "gpt-4".to_string(),
         system: "Your are a Linux assistant and a coder.".to_string(),
         markdown: true,
+        main_gpu: "".to_string(),
         expiration: 600,
         local: vec![LLamaSetup {
             name: "llama2".to_string(),
@@ -69,6 +71,7 @@ pub fn display_setup(setup: &Setup) {
     termimad::print_inline(&format!("*MODEL*      => `{}`\n", setup.model));
     termimad::print_inline(&format!("*SYSTEM*     => `{}`\n", setup.system));
     termimad::print_inline(&format!("*MARKDOWN*   => `{}`\n", setup.markdown));
+    termimad::print_inline(&format!("*MAIN GPU*   => `{}`\n", setup.main_gpu));
     termimad::print_inline(&format!("*EXPIRATION* => `{}`\n", setup.expiration));
 
     for llama in &setup.local {
