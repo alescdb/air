@@ -41,7 +41,11 @@ fn get_chat(local: &Option<String>, setup: &Setup) -> Box<dyn IChat> {
         let llama = get_local(&setup.local, &local.clone().unwrap());
         if llama.is_some() {
             let m: &LLamaSetup = llama.clone().unwrap();
-            return Box::new(LLamaChat::new(m.model.clone(), m.prompt.clone()));
+            return Box::new(LLamaChat::new(
+                m.model.clone(),
+                m.prompt.clone(),
+                setup.main_gpu.clone(),
+            ));
         } else {
             error!(
                 "Can't find local model name in setup : '{}'",
