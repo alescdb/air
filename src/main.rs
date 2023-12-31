@@ -36,29 +36,30 @@ fn get_local<'a>(local: &'a [LLamaSetup], name: &str) -> Option<&'a LLamaSetup> 
     return None;
 }
 
-fn get_chat(local: &Option<String>, setup: &Setup) -> Box<dyn IChat> {
-    if !local.is_none() {
-        let llama = get_local(&setup.local, &local.clone().unwrap());
-        if llama.is_some() {
-            let m: &LLamaSetup = llama.clone().unwrap();
-            return Box::new(LLamaChat::new(
-                m.model.clone(),
-                m.prompt.clone(),
+
+fn get_chat(local: &Option<String>, setup: &Setup) -> Result<Box<dyn IChat>, String> {
+    if let Some(local) = local {
+        let _name: String = local.clone();
+        let llama: Option<&LLamaSetup> = get_local(&setup.local, &_name);
+
+        if let Some(llama) = llama {
+            return Ok(Box::new(LLamaChat::new(
+                llama.model.clone(),
+                llama.prompt.clone(),
                 setup.main_gpu.clone(),
-            ));
+            )));
         } else {
-            error!(
+            return Err(format!(
                 "Can't find local model name in setup : '{}'",
-                local.clone().unwrap()
-            );
-            std::process::exit(10);
+                _name
+            ));
         }
     }
-    return Box::new(ChatGPT::new(setup.apikey.clone()));
+    return Ok(Box::new(ChatGPT::new(setup.apikey.clone())));
 }
 
 #[tokio::main]
-async fn main() -> Result<(), Error> {
+async fn main() -> Result<(), std::io::Error> {
     let setup: Setup = match load_setup() {
         Ok(setup) => setup,
         Err(e) => {
@@ -68,7 +69,13 @@ async fn main() -> Result<(), Error> {
     };
     let options = parse_command_line(setup.markdown);
     let mut history = History::new(setup.expiration);
-    let mut chatgpt = get_chat(&options.local, &setup);
+    let mut ichat = match get_chat(&options.local, &setup) {
+        Ok(n) => n,
+        Err(e) => {
+            error!("{}", e);
+            std::process::exit(5);
+        }
+    };
 
     unsafe {
         VERBOSE = if cfg!(debug_assertions) {
@@ -88,9 +95,9 @@ async fn main() -> Result<(), Error> {
         }
     }
 
-    chatgpt.set_model(setup.model.to_string());
+    ichat.set_model(setup.model.to_string());
     if !setup.system.is_empty() {
-        chatgpt.set_system(setup.system.to_string());
+        ichat.set_system(setup.system.to_string());
     }
 
     history.load();
@@ -109,12 +116,12 @@ async fn main() -> Result<(), Error> {
         std::process::exit(5);
     }
 
-    let answer = chatgpt
+    let answer = ichat
         .chat(options.prompt.to_string(), Some(history.get_completions()))
         .await;
     display(options.markdown, answer.clone());
 
-    history.add(chatgpt.get_name(), &*options.prompt, &*answer.clone());
+    history.add(ichat.get_name(), &*options.prompt, &*answer.clone());
     history.save();
 
     Ok(())
