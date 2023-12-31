@@ -40,9 +40,13 @@ fn get_chat(local: &Option<String>, setup: &Setup) -> Box<dyn IChat> {
     if !local.is_none() {
         let llama = get_local(&setup.local, &local.clone().unwrap());
         if llama.is_some() {
-            return Box::new(LLamaChat::new(llama.unwrap().model.clone()));
+            let m: &LLamaSetup = llama.clone().unwrap();
+            return Box::new(LLamaChat::new(m.model.clone(), m.prompt.clone()));
         } else {
-            error!("Can't find local model name in setup : '{}'", local.clone().unwrap());
+            error!(
+                "Can't find local model name in setup : '{}'",
+                local.clone().unwrap()
+            );
             std::process::exit(10);
         }
     }
