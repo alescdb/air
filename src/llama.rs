@@ -26,7 +26,7 @@ impl IChat for LLamaChat {
     }
 
     async fn chat(&mut self, prompt: String, _history: Option<Vec<ChatCompletionMessage>>) -> String {
-        let model_options = ModelOptions::default();
+        let model_options: ModelOptions = ModelOptions::default();
 
         let llama = LLama::new(
             self.model.clone(),

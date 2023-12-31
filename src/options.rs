@@ -5,6 +5,7 @@ pub struct CommandLine {
     pub clear: bool,
     pub markdown: bool,
     pub prompt: String,
+    pub local: Option<String>,
     pub usage: String,
 }
 
@@ -15,6 +16,7 @@ pub fn parse_command_line(markdown: bool) -> CommandLine {
     opts.optflag("c", "clear", "Clear history");
     opts.optflag("v", "verbose", "Verbose/debug");
     opts.optflag("m", "markdown", "Display as markdown");
+    opts.optopt("l", "local", "Run local model (llama-cpp)", "name");
     opts.optflag("h", "help", "Help");
 
     let matches = match opts.parse(&args[1..]) {
@@ -38,6 +40,7 @@ pub fn parse_command_line(markdown: bool) -> CommandLine {
         clear: matches.opt_present("c"),
         markdown: md,
         prompt: matches.free.join(" ").trim().to_string(),
+        local: matches.opt_str("l"),
         usage,
     };
 }
@@ -46,6 +49,7 @@ pub fn display_options(options: &CommandLine) {
     termimad::print_inline(&format!("*CLEAR*      => `{}`\n", options.clear));
     termimad::print_inline(&format!("*MARKDOWN*   => `{}`\n", options.markdown));
     termimad::print_inline(&format!("*VERBOSE*    => `{}`\n", options.verbose));
+    termimad::print_inline(&format!("*LOCAL*      => `{:?}`\n", options.local));
     termimad::print_inline(&format!("*PROMPT*     => `{}`\n", options.prompt));
     termimad::print_inline("___\n");
 }
