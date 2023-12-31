@@ -28,5 +28,5 @@ package() {
 	cd ${pkgname}
 	name=${pkgname%%-*}
 	install -Dm755 ./target/release/$name -T ${pkgdir}/usr/bin/$name
-	ln -sf ${pkgdir}/usr/bin/$name ${pkgdir}/usr/bin/aid
+	ln -sf /usr/bin/$name ${pkgdir}/usr/bin/aid
 }
