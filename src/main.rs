@@ -1,20 +1,19 @@
 mod chatgpt;
-mod config;
 mod history;
 mod ichat;
 mod llama;
 mod logs;
 mod options;
 mod path;
+mod setup;
 
 use crate::chatgpt::ChatGPT;
-use crate::config::{display_setup, load_setup, Setup};
 use crate::history::History;
 use crate::ichat::IChat;
 use crate::llama::LLamaChat;
 use crate::logs::*;
 use crate::options::{display_options, parse_command_line};
-use config::LLamaSetup;
+use setup::{LLamaSetup, Setup};
 use termimad::crossterm::style::Stylize;
 use termimad::*;
 
@@ -36,23 +35,24 @@ fn get_local<'a>(local: &'a [LLamaSetup], name: &str) -> Option<&'a LLamaSetup> 
     return None;
 }
 
-
 fn get_chat(local: &Option<String>, setup: &Setup) -> Result<Box<dyn IChat>, String> {
     if let Some(local) = local {
-        let _name: String = local.clone();
-        let llama: Option<&LLamaSetup> = get_local(&setup.local, &_name);
+        if let Some(locals) = &setup.local {
+            let _name: String = local.clone();
+            let llama: Option<&LLamaSetup> = get_local(&locals, &_name);
 
-        if let Some(llama) = llama {
-            return Ok(Box::new(LLamaChat::new(
-                llama.model.clone(),
-                llama.prompt.clone(),
-                setup.main_gpu.clone(),
-            )));
-        } else {
-            return Err(format!(
-                "Can't find local model name in setup : '{}'",
-                _name
-            ));
+            if let Some(llama) = llama {
+                return Ok(Box::new(LLamaChat::new(
+                    llama.model.clone(),
+                    llama.prompt.clone(),
+                    setup.get_main_gpu(),
+                )));
+            } else {
+                return Err(format!(
+                    "Can't find local model name in setup : '{}'",
+                    _name
+                ));
+            }
         }
     }
     return Ok(Box::new(ChatGPT::new(setup.apikey.clone())));
@@ -60,15 +60,16 @@ fn get_chat(local: &Option<String>, setup: &Setup) -> Result<Box<dyn IChat>, Str
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let setup: Setup = match load_setup() {
+    let setup = Setup::new();
+    match setup.load() {
         Ok(setup) => setup,
         Err(e) => {
             println!("Error: {}", e);
             std::process::exit(10);
         }
     };
-    let options = parse_command_line(setup.markdown);
-    let mut history = History::new(setup.expiration);
+    let options = parse_command_line(setup.get_markdown());
+    let mut history = History::new(setup.get_expiration());
     let mut ichat = match get_chat(&options.local, &setup) {
         Ok(n) => n,
         Err(e) => {
@@ -90,14 +91,16 @@ async fn main() -> Result<(), std::io::Error> {
 
     unsafe {
         if VERBOSE {
-            display_setup(&setup);
+            setup.display_setup();
             display_options(&options);
         }
     }
 
-    ichat.set_model(setup.model.to_string());
-    if !setup.system.is_empty() {
-        ichat.set_system(setup.system.to_string());
+    ichat.set_model(setup.get_model());
+    if let Some(system) = setup.system {
+        if !system.trim().is_empty() {
+            ichat.set_system(system);
+        }
     }
 
     history.load();
@@ -116,7 +119,7 @@ async fn main() -> Result<(), std::io::Error> {
         std::process::exit(5);
     }
 
-    let answer = ichat
+    let answer: String = ichat
         .chat(options.prompt.to_string(), Some(history.get_completions()))
         .await;
     display(options.markdown, answer.clone());
