@@ -1,0 +1,120 @@
+use crate::path::{get_config_path, FileInfo};
+use serde::{Deserialize, Serialize};
+use std::fmt::Debug;
+use std::fs;
+use std::io::ErrorKind;
+
+const EMPTY_KEY: &str = "<enter your openai api key here>";
+const DEFAULT_MODEL: &str = "gpt-4-1106-preview";
+const DEFAULT_SYSTEM: &str = "Your are a Linux assistant and a coder.";
+const DEFAULT_EXPIRATION: u32 = 60 * 60 * 24; // 24h
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct LLamaSetup {
+    pub name: String,
+    pub model: String,
+    pub prompt: Option<String>,
+}
+
+#[derive(Serialize, Deserialize, Debug)]
+pub struct Setup {
+    pub apikey: String,
+    pub model: Option<String>,
+    pub system: Option<String>,
+    pub markdown: Option<bool>,
+    pub expiration: Option<u32>,
+    pub main_gpu: Option<String>,
+    pub local: Option<Vec<LLamaSetup>>,
+}
+
+impl Default for Setup {
+    fn default() -> Setup {
+        Self {
+            apikey: EMPTY_KEY.to_string(),
+            model: Some(DEFAULT_MODEL.to_string()),
+            system: Some(DEFAULT_SYSTEM.to_string()),
+            markdown: Some(true),
+            expiration: Some(DEFAULT_EXPIRATION),
+            main_gpu: None,
+            local: None,
+        }
+    }
+}
+
+#[allow(dead_code)]
+impl Setup {
+    pub fn new() -> Self {
+        Setup::default()
+    }
+
+    pub fn get_markdown(&self) -> bool {
+        return self.markdown.unwrap_or(true);
+    }
+
+    pub fn get_expiration(&self) -> u32 {
+        return self.expiration.unwrap_or(DEFAULT_EXPIRATION);
+    }
+
+    pub fn get_model(&self) -> String {
+        return self.model.clone().unwrap_or(DEFAULT_MODEL.to_string());
+    }
+
+    pub fn get_main_gpu(&self) -> String {
+        return self.main_gpu.clone().unwrap_or("".to_string());
+    }
+    
+    pub fn load(&self) -> Result<Setup, std::io::Error> {
+        let config = get_config_path("setup.json");
+        if !config.exists {
+            self.write_setup(&config);
+            return Err(std::io::Error::new(
+                ErrorKind::NotFound,
+                format!("Setup file {} does not exists !", &config.path),
+            ));
+        }
+
+        let contents = fs::read_to_string(config.path.clone())?;
+        let setup: Setup = serde_json::from_str(&contents)?;
+
+        if setup.apikey.is_empty() || setup.apikey == EMPTY_KEY {
+            return Err(std::io::Error::new(
+                ErrorKind::NotFound,
+                format!("Edit setup file {}, and set your api key !", &config.path),
+            ));
+        }
+        return Ok(setup);
+    }
+
+    pub fn write_setup(&self, config: &FileInfo) {
+        let serialized = serde_json::to_string_pretty(&Setup {
+            local: Some(vec![LLamaSetup {
+                name: "llama2".to_string(),
+                model: "/opt/models/llama.gguf".to_string(),
+                prompt: None,
+            }]),
+            ..Default::default()
+        })
+        .expect("to_string_pretty() failed");
+
+        fs::write(&config.path, serialized.as_str()).expect("read_to_string() failed");
+    }
+
+    pub fn display_setup(&self) {
+        termimad::print_inline(&format!("*APIKEY*     => `{:?}`\n", self.apikey));
+        termimad::print_inline(&format!("*MODEL*      => `{:?}`\n", self.model));
+        termimad::print_inline(&format!("*SYSTEM*     => `{:?}`\n", self.system));
+        termimad::print_inline(&format!("*MARKDOWN*   => `{:?}`\n", self.markdown));
+        termimad::print_inline(&format!("*MAIN GPU*   => `{:?}`\n", self.main_gpu));
+        termimad::print_inline(&format!("*EXPIRATION* => `{:?}`\n", self.expiration));
+
+        if let Some(local) = &self.local {
+            for (i, llama) in local.iter().enumerate() {
+                termimad::print_inline(&format!("# LOCAL {}\n", i));
+                termimad::print_inline(&format!("- *NAME*     => `{:?}`\n", llama.name));
+                termimad::print_inline(&format!("- *MODEL*    => `{:?}`\n", llama.model));
+                termimad::print_inline(&format!("- *PROMPT*   => `{:?}`\n", llama.prompt));
+            }
+        }
+        termimad::print_inline("___\n");
+    }
+}
