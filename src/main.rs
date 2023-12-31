@@ -12,7 +12,7 @@ use crate::history::History;
 use crate::ichat::IChat;
 use crate::llama::LLamaChat;
 use crate::logs::*;
-use crate::options::{display_options, parse_command_line};
+use crate::options::CommandLine;
 use setup::{LLamaSetup, Setup};
 use termimad::crossterm::style::Stylize;
 use termimad::*;
@@ -68,31 +68,35 @@ async fn main() -> Result<(), std::io::Error> {
             std::process::exit(10);
         }
     };
-    let options = parse_command_line(setup.get_markdown());
+    let options = match CommandLine::new(setup.get_markdown()) {
+        Ok(options) => options,
+        Err(usage) => {
+            println!("{}", usage);
+            std::process::exit(10);
+        }
+    };
     let mut history = History::new(setup.get_expiration());
     let mut ichat = match get_chat(&options.local, &setup) {
-        Ok(n) => n,
-        Err(e) => {
-            error!("{}", e);
+        Ok(chat) => chat,
+        Err(message) => {
+            error!("{}", message);
             std::process::exit(5);
         }
     };
 
+    // TODO, better way ?
     unsafe {
-        VERBOSE = if cfg!(debug_assertions) {
-            true
-        } else {
-            options.verbose
-        };
+        VERBOSE = options.verbose;
     }
+
     verbose!("Configuration Path : {}", path::get_config_directory());
     verbose!("History File : {:?}", path::get_config_path("history.json"));
     verbose!("Setup File : {:?}", path::get_config_path("setup.json"));
 
     unsafe {
         if VERBOSE {
-            setup.display_setup();
-            display_options(&options);
+            setup.display();
+            options.display();
         }
     }
 

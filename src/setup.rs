@@ -1,8 +1,10 @@
+use crate::error;
 use crate::path::{get_config_path, FileInfo};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::fs;
 use std::io::ErrorKind;
+use termimad::crossterm::style::Stylize;
 
 const EMPTY_KEY: &str = "<enter your openai api key here>";
 const DEFAULT_MODEL: &str = "gpt-4-1106-preview";
@@ -62,11 +64,14 @@ impl Setup {
     pub fn get_main_gpu(&self) -> String {
         return self.main_gpu.clone().unwrap_or("".to_string());
     }
-    
+
     pub fn load(&self) -> Result<Setup, std::io::Error> {
         let config = get_config_path("setup.json");
         if !config.exists {
-            self.write_setup(&config);
+            match self.write(&config) {
+                Ok(_) => (),
+                Err(e) => error!("{}", e),
+            };
             return Err(std::io::Error::new(
                 ErrorKind::NotFound,
                 format!("Setup file {} does not exists !", &config.path),
@@ -85,7 +90,7 @@ impl Setup {
         return Ok(setup);
     }
 
-    pub fn write_setup(&self, config: &FileInfo) {
+    fn write(&self, config: &FileInfo) -> Result<(), std::io::Error> {
         let serialized = serde_json::to_string_pretty(&Setup {
             local: Some(vec![LLamaSetup {
                 name: "llama2".to_string(),
@@ -93,13 +98,13 @@ impl Setup {
                 prompt: None,
             }]),
             ..Default::default()
-        })
-        .expect("to_string_pretty() failed");
+        })?;
 
-        fs::write(&config.path, serialized.as_str()).expect("read_to_string() failed");
+        fs::write(&config.path, serialized.as_str())?;
+        Ok(())
     }
 
-    pub fn display_setup(&self) {
+    pub fn display(&self) {
         termimad::print_inline(&format!("*APIKEY*     => `{:?}`\n", self.apikey));
         termimad::print_inline(&format!("*MODEL*      => `{:?}`\n", self.model));
         termimad::print_inline(&format!("*SYSTEM*     => `{:?}`\n", self.system));
