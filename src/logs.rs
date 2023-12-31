@@ -23,6 +23,6 @@ macro_rules! error {
         eprint!("\n")
     );
     ($($arg:tt)*) => (
-        eprintln!("{}", Stylize::red(format!($($arg)*)));
+        eprintln!("{}", Stylize::red(format!($($arg)*)))
     )
 }
