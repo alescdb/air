@@ -2,7 +2,6 @@ mod chatgpt;
 mod history;
 mod ichat;
 mod llama;
-mod logs;
 mod options;
 mod path;
 mod setup;
@@ -11,11 +10,10 @@ use crate::chatgpt::ChatGPT;
 use crate::history::History;
 use crate::ichat::IChat;
 use crate::llama::LLamaChat;
-use crate::logs::*;
 use crate::options::CommandLine;
 use setup::{LLamaSetup, Setup};
-use termimad::crossterm::style::Stylize;
-use termimad::*;
+use std::io::Write;
+use termimad::{*, crossterm::style::Stylize};
 
 fn display(markdown: bool, content: String) {
     if markdown {
@@ -58,10 +56,29 @@ fn get_chat(local: &Option<String>, setup: &Setup) -> Result<Box<dyn IChat>, Str
     return Ok(Box::new(ChatGPT::new(setup.apikey.clone())));
 }
 
+fn init_log(verbose: bool) {
+    let level = if verbose {
+        log::LevelFilter::Warn
+    } else {
+        log::LevelFilter::Info
+    };
+
+    env_logger::Builder::new()
+        .filter_level(level)
+        .parse_default_env()
+        .format(|buf, record| {
+            if record.level() == log::Level::Error {
+                writeln!(buf, "{}", Stylize::red(format_args!("{}", record.args()).to_string()))
+            } else {
+                writeln!(buf, "{}", record.args())
+            }
+        })
+        .init();
+}
+
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let setup = Setup::new();
-    match setup.load() {
+    let setup: Setup = match Setup::new() {
         Ok(setup) => setup,
         Err(e) => {
             println!("Error: {}", e);
@@ -75,29 +92,25 @@ async fn main() -> Result<(), std::io::Error> {
             std::process::exit(10);
         }
     };
+    init_log(options.verbose);
+
     let mut history = History::new(setup.get_expiration());
     let mut ichat = match get_chat(&options.local, &setup) {
         Ok(chat) => chat,
         Err(message) => {
-            error!("{}", message);
+            log::error!("{}", message);
             std::process::exit(5);
         }
     };
 
-    // TODO, better way ?
-    unsafe {
-        VERBOSE = options.verbose;
-    }
+    if options.verbose {
+        log::info!("Setup Path : {}", path::get_config_directory());
+        log::info!("Setup      : {:?}", path::get_config_path("setup.json"));
+        log::info!("History    : {:?}", path::get_config_path("history.json"));
+        log::info!("___");
 
-    verbose!("Configuration Path : {}", path::get_config_directory());
-    verbose!("History File : {:?}", path::get_config_path("history.json"));
-    verbose!("Setup File : {:?}", path::get_config_path("setup.json"));
-
-    unsafe {
-        if VERBOSE {
-            setup.display();
-            options.display();
-        }
+        setup.display();
+        options.display();
     }
 
     ichat.set_model(setup.get_model());
@@ -118,7 +131,7 @@ async fn main() -> Result<(), std::io::Error> {
         // don't display usage if --clear
         if !options.clear {
             eprintln!("{}", options.usage);
-            error!("Empty prompt.");
+            log::error!("Empty prompt.");
         }
         std::process::exit(5);
     }

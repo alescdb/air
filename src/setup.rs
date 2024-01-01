@@ -1,13 +1,11 @@
-use crate::error;
 use crate::path::{get_config_path, FileInfo};
 use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::fs;
 use std::io::ErrorKind;
-use termimad::crossterm::style::Stylize;
 
+pub(crate) const DEFAULT_MODEL: &str = "gpt-4-1106-preview";
 const EMPTY_KEY: &str = "<enter your openai api key here>";
-const DEFAULT_MODEL: &str = "gpt-4-1106-preview";
 const DEFAULT_SYSTEM: &str = "Your are a Linux assistant and a coder.";
 const DEFAULT_EXPIRATION: u32 = 60 * 60 * 24; // 24h
 
@@ -45,8 +43,29 @@ impl Default for Setup {
 
 #[allow(dead_code)]
 impl Setup {
-    pub fn new() -> Self {
-        Setup::default()
+    pub fn new() -> Result<Self, std::io::Error> {
+        let config = get_config_path("setup.json");
+        if !config.exists {
+            match Setup::write(&config) {
+                Ok(_) => (),
+                Err(e) => log::error!("{}", e),
+            };
+            return Err(std::io::Error::new(
+                ErrorKind::NotFound,
+                format!("Setup file {} does not exists !", &config.path),
+            ));
+        }
+
+        let contents: String = fs::read_to_string(config.path.clone())?;
+        let setup: Setup = serde_json::from_str(&contents)?;
+
+        if setup.apikey.is_empty() || setup.apikey == EMPTY_KEY {
+            return Err(std::io::Error::new(
+                ErrorKind::NotFound,
+                format!("Edit setup file {}, and set your api key !", &config.path),
+            ));
+        }
+        return Ok(setup);
     }
 
     pub fn get_markdown(&self) -> bool {
@@ -61,36 +80,15 @@ impl Setup {
         return self.model.clone().unwrap_or(DEFAULT_MODEL.to_string());
     }
 
+    pub fn get_system(&self) -> String {
+        return self.system.clone().unwrap_or(DEFAULT_SYSTEM.to_string());
+    }
+
     pub fn get_main_gpu(&self) -> String {
         return self.main_gpu.clone().unwrap_or("".to_string());
     }
 
-    pub fn load(&self) -> Result<Setup, std::io::Error> {
-        let config = get_config_path("setup.json");
-        if !config.exists {
-            match self.write(&config) {
-                Ok(_) => (),
-                Err(e) => error!("{}", e),
-            };
-            return Err(std::io::Error::new(
-                ErrorKind::NotFound,
-                format!("Setup file {} does not exists !", &config.path),
-            ));
-        }
-
-        let contents = fs::read_to_string(config.path.clone())?;
-        let setup: Setup = serde_json::from_str(&contents)?;
-
-        if setup.apikey.is_empty() || setup.apikey == EMPTY_KEY {
-            return Err(std::io::Error::new(
-                ErrorKind::NotFound,
-                format!("Edit setup file {}, and set your api key !", &config.path),
-            ));
-        }
-        return Ok(setup);
-    }
-
-    fn write(&self, config: &FileInfo) -> Result<(), std::io::Error> {
+    fn write(config: &FileInfo) -> Result<(), std::io::Error> {
         let serialized = serde_json::to_string_pretty(&Setup {
             local: Some(vec![LLamaSetup {
                 name: "llama2".to_string(),
@@ -105,12 +103,12 @@ impl Setup {
     }
 
     pub fn display(&self) {
-        termimad::print_inline(&format!("*APIKEY*     => `{:?}`\n", self.apikey));
-        termimad::print_inline(&format!("*MODEL*      => `{:?}`\n", self.model));
-        termimad::print_inline(&format!("*SYSTEM*     => `{:?}`\n", self.system));
-        termimad::print_inline(&format!("*MARKDOWN*   => `{:?}`\n", self.markdown));
-        termimad::print_inline(&format!("*MAIN GPU*   => `{:?}`\n", self.main_gpu));
-        termimad::print_inline(&format!("*EXPIRATION* => `{:?}`\n", self.expiration));
+        termimad::print_inline(&format!("*APIKEY*     => `{}`\n", self.apikey));
+        termimad::print_inline(&format!("*MODEL*      => `{}`\n", self.get_model()));
+        termimad::print_inline(&format!("*SYSTEM*     => `{}`\n", self.get_system()));
+        termimad::print_inline(&format!("*MARKDOWN*   => `{}`\n", self.get_markdown()));
+        termimad::print_inline(&format!("*MAIN GPU*   => `{}`\n", self.get_main_gpu()));
+        termimad::print_inline(&format!("*EXPIRATION* => `{}`\n", self.get_expiration()));
 
         if let Some(local) = &self.local {
             for (i, llama) in local.iter().enumerate() {

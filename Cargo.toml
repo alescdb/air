@@ -1,6 +1,6 @@
 [package]
 name = "air"
-version = "0.1.0"
+version = "0.3.0"
 edition = "2021"
 
 [profile.release]
@@ -17,3 +17,5 @@ termimad = "0.26.1"
 chrono = { version = "0.4", features = ["serde"] }
 dirs = { version = "5.0.1", features = [] }
 async-trait = "0.1.75"
+log = "0.4.20"
+env_logger = "0.10.1"
