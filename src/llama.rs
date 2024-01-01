@@ -1,5 +1,4 @@
-use crate::logs::*;
-use crate::{ichat::IChat, verbose};
+use crate::ichat::IChat;
 use async_trait::async_trait;
 use llama_cpp_rs::{
     options::{ModelOptions, PredictOptions},
@@ -48,10 +47,9 @@ impl IChat for LLamaChat {
             ..Default::default()
         };
         let prompt_fmt = self.get_prompt(prompt);
-        verbose!("Prompt Template : {}", prompt_fmt);
-        let results: String = llama.predict(prompt_fmt.into(), predict_options).unwrap();
+        log::debug!("Prompt Template : {}", prompt_fmt);
 
-        return results;
+        return llama.predict(prompt_fmt.into(), predict_options).unwrap();
     }
 }
 
