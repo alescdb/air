@@ -6,11 +6,11 @@ pkgver=0.3.0
 pkgrel=1
 pkgdesc="A simple ChatGPT & Llama-cpp command line with ansi markdown display (written in Rust)"
 arch=("x86_64")
-url="https://github.com/alescdb/aid.git"
+url="https://github.com/alescdb/air.git"
 license=('Apache')
 makedepends=(rust)
 conflicts=('aid')
-source=('air-git::git+https://github.com/alescdb/aid.git')
+source=('air-git::git+https://github.com/alescdb/air.git')
 provides=("air=${pkgver%%.r*}")
 b2sums=('SKIP')
 options=('!strip')
