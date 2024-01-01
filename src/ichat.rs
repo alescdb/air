@@ -37,5 +37,5 @@ pub trait IChat {
     fn get_name(&mut self) -> &str;
     fn set_system(&mut self, system: String);
     fn set_model(&mut self, model: String);
-    async fn chat(&mut self, prompt: String, history: Option<Vec<Message>>) -> String;
+    async fn chat(&mut self, prompt: String, history: Option<Vec<Message>>) -> Result<String, Box<dyn std::error::Error>>;
 }

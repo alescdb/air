@@ -15,7 +15,6 @@ use setup::{LLamaSetup, Setup};
 use std::io::Write;
 use termimad::{crossterm::style::Stylize, *};
 
-
 fn display(markdown: bool, content: String) {
     if markdown {
         let skin = MadSkin::default();
@@ -125,11 +124,23 @@ async fn main() -> Result<(), std::io::Error> {
         }
     }
 
-    history.load();
-    if options.clear {
-        history.clear();
-        history.save();
-        println!("History cleared.");
+    match history.load() {
+        Ok(_) => {
+            if options.clear {
+                history.clear();
+                match history.save() {
+                    Ok(_) => {
+                        println!("History cleared.");
+                    }
+                    Err(e) => {
+                        log::error!("{}", e);
+                    }
+                }
+            }
+        }
+        Err(e) => {
+            log::error!("{}", e);
+        }
     }
 
     if options.prompt.is_empty() {
@@ -141,13 +152,24 @@ async fn main() -> Result<(), std::io::Error> {
         std::process::exit(5);
     }
 
-    let answer: String = ichat
+    let answer: String = match ichat
         .chat(options.prompt.to_string(), Some(history.get_completions()))
-        .await;
+        .await
+    {
+        Ok(answer) => answer,
+        Err(message) => {
+            log::error!("{}", message);
+            std::process::exit(5);
+        }
+    };
     display(options.markdown, answer.clone());
 
     history.add(ichat.get_name(), &*options.prompt, &*answer.clone());
-    history.save();
-
+    match history.save() {
+        Ok(_) => {}
+        Err(e) => {
+            log::error!("{}", e);
+        }
+    }
     Ok(())
 }

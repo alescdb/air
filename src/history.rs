@@ -1,7 +1,10 @@
-use std::fs;
+use crate::{
+    ichat::{self, Role},
+    path::get_config_path,
+};
 use chrono::{Local, NaiveDateTime};
 use serde::{Deserialize, Serialize};
-use crate::{path::get_config_path, ichat::{Role, self}};
+use std::fs;
 
 #[derive(Serialize, Deserialize, Debug)]
 pub struct HistoryMessage {
@@ -39,12 +42,13 @@ impl History {
             assistant: assistant.to_string(),
         });
     }
-    pub fn save(&self) {
-        let serialized = serde_json::to_string_pretty(&self.messages)
-            .expect("to_string_pretty() failed");
-        fs::write(&self.file, serialized.as_str())
-            .expect("read_to_string() failed");
+
+    pub fn save(&self) -> Result<(), std::io::Error> {
+        let serialized = serde_json::to_string_pretty(&self.messages)?;
+        fs::write(&self.file, serialized.as_str())?;
+        Ok(())
     }
+
     pub fn get_completions(&self) -> Vec<ichat::Message> {
         let mut completions = vec![];
         for message in &self.messages {
@@ -68,12 +72,10 @@ impl History {
     pub fn clear(&mut self) {
         self.messages.clear();
     }
-    pub fn load(&mut self) {
+    pub fn load(&mut self) -> Result<(), std::io::Error> {
         if self.exists {
-            let contents = fs::read_to_string(&self.file)
-                .expect(&*format!("Failed to read file {}", self.file));
-            let messages: Vec<HistoryMessage> = serde_json::from_str(&contents)
-                .expect(&*format!("Failed to parse json in {}", self.file));
+            let contents = fs::read_to_string(&self.file)?;
+            let messages: Vec<HistoryMessage> = serde_json::from_str(&contents)?;
 
             for message in messages {
                 if !self.is_expired(message.date) {
@@ -81,6 +83,6 @@ impl History {
                 }
             }
         }
+        Ok(())
     }
 }
-

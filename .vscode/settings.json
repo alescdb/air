@@ -4,5 +4,6 @@
   "code-runner.executorMap": {
     "rust": "cd $dir && cargo run"
   },
-  "code-runner.runInTerminal": true
+  "code-runner.runInTerminal": true,
+  "editor.wordWrapColumn": 320
 }

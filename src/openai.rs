@@ -1,6 +1,6 @@
 use crate::ichat::{IChat, Message, Role};
 use async_trait::async_trait;
-use reqwest::{self, Client};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
 
 const HEADER_AUTHORIZATION: &str = "Authorization";
@@ -53,7 +53,11 @@ impl IChat for OpenAI {
         self.model = model
     }
 
-    async fn chat(&mut self, prompt: String, history: Option<Vec<Message>>) -> String {
+    async fn chat(
+        &mut self,
+        prompt: String,
+        history: Option<Vec<Message>>,
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let mut messages: Vec<Message> = vec![];
 
         if let Some(sys) = &self.system {
@@ -78,25 +82,22 @@ impl IChat for OpenAI {
             model: &self.model,
             messages,
         };
-        let serialized =
-            serde_json::to_string_pretty(&completion).expect("to_string_pretty() failed");
+        let serialized = serde_json::to_string_pretty(&completion)?;
         log::debug!("{}\n", serialized);
 
         let client: Client = Client::new();
-        let answer: OpenAIResponse = client
+        let answer = client
             .post(OPENAI_URL)
             .header(HEADER_AUTHORIZATION, format!("Bearer {}", self.apikey))
             .header(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
             .body(serialized)
             .send()
-            .await
-            .expect("send() failed")
+            .await?
             .json::<OpenAIResponse>()
-            .await
-            .expect("text() failed");
+            .await?;
 
         log::debug!("{:?}\n", answer);
-        return answer.choices.first().unwrap().message.content.clone();
+        return Ok(answer.choices.first().unwrap().message.content.clone());
     }
 }
 

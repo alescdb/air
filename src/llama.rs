@@ -30,14 +30,13 @@ impl IChat for LLamaChat {
         &mut self,
         prompt: String,
         _history: Option<Vec<Message>>,
-    ) -> String {
+    ) -> Result<String, Box<dyn std::error::Error>> {
         let model_options: ModelOptions = ModelOptions {
             main_gpu: self.main_gpu.clone(),
             ..Default::default()
         };
 
         let llama: LLama = LLama::new(self.model.clone(), &model_options).unwrap();
-
         let predict_options: PredictOptions = PredictOptions {
             debug_mode: false,
             temperature: 0.2,
@@ -48,7 +47,7 @@ impl IChat for LLamaChat {
         let prompt_fmt = self.get_prompt(prompt);
         log::debug!("Prompt Template : {}", prompt_fmt);
 
-        return llama.predict(prompt_fmt.into(), predict_options).unwrap();
+        return Ok(llama.predict(prompt_fmt.into(), predict_options).unwrap());
     }
 }
 
