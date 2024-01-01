@@ -19,7 +19,7 @@
           "kind": "bin"
         }
       },
-      "args": ["[INST] Write code to solve the following coding problem that obeys the constraints and passes the example test cases. Please wrap your code answer using ```:\nIn rust, how to make main async?\n[/INST]\n"],
+      "args": [],
       "cwd": "${workspaceFolder}"
     },
     {
