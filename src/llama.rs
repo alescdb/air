@@ -1,10 +1,9 @@
-use crate::ichat::IChat;
+use crate::ichat::{IChat, Message};
 use async_trait::async_trait;
 use llama_cpp_rs::{
     options::{ModelOptions, PredictOptions},
     LLama,
 };
-use openai::chat::ChatCompletionMessage;
 
 pub struct LLamaChat {
     pub model: String,
@@ -30,7 +29,7 @@ impl IChat for LLamaChat {
     async fn chat(
         &mut self,
         prompt: String,
-        _history: Option<Vec<ChatCompletionMessage>>,
+        _history: Option<Vec<Message>>,
     ) -> String {
         let model_options: ModelOptions = ModelOptions {
             main_gpu: self.main_gpu.clone(),

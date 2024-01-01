@@ -1,19 +1,20 @@
-mod chatgpt;
 mod history;
 mod ichat;
 mod llama;
+mod openai;
 mod options;
 mod path;
 mod setup;
 
-use crate::chatgpt::ChatGPT;
 use crate::history::History;
 use crate::ichat::IChat;
 use crate::llama::LLamaChat;
 use crate::options::CommandLine;
+use openai::OpenAI;
 use setup::{LLamaSetup, Setup};
 use std::io::Write;
-use termimad::{*, crossterm::style::Stylize};
+use termimad::{crossterm::style::Stylize, *};
+
 
 fn display(markdown: bool, content: String) {
     if markdown {
@@ -53,7 +54,7 @@ fn get_chat(local: &Option<String>, setup: &Setup) -> Result<Box<dyn IChat>, Str
             }
         }
     }
-    return Ok(Box::new(ChatGPT::new(setup.apikey.clone())));
+    return Ok(Box::new(OpenAI::new(setup.apikey.clone())));
 }
 
 fn init_log(verbose: bool) {
@@ -68,7 +69,11 @@ fn init_log(verbose: bool) {
         .parse_default_env()
         .format(|buf, record| {
             if record.level() == log::Level::Error {
-                writeln!(buf, "{}", Stylize::red(format_args!("{}", record.args()).to_string()))
+                writeln!(
+                    buf,
+                    "{}",
+                    Stylize::red(format_args!("{}", record.args()).to_string())
+                )
             } else {
                 writeln!(buf, "{}", record.args())
             }

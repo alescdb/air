@@ -1,6 +1,6 @@
 [package]
 name = "air"
-version = "0.3.1"
+version = "0.4.0"
 edition = "2021"
 
 [profile.release]
@@ -8,7 +8,6 @@ strip = true
 
 [dependencies]
 llama_cpp_rs = "0.3.0"
-openai = { version = "1.0.0-alpha.13", features = ["rustls", "reqwest"] }
 serde = { version = "1.0.193", features = ["derive", "rc", "alloc"] }
 tokio = { version = "1.35.1", features = ["full"] }
 serde_json = "1.0.108"
@@ -19,3 +18,4 @@ dirs = { version = "5.0.1", features = [] }
 async-trait = "0.1.75"
 log = "0.4.20"
 env_logger = "0.10.1"
+reqwest = { version = "0.11.23", features = ["json"] }

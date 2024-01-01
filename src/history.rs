@@ -1,11 +1,10 @@
 use std::fs;
 use chrono::{Local, NaiveDateTime};
-use openai::chat::{ChatCompletionMessage, ChatCompletionMessageRole};
 use serde::{Deserialize, Serialize};
-use crate::path::get_config_path;
+use crate::{path::get_config_path, ichat::{Role, self}};
 
 #[derive(Serialize, Deserialize, Debug)]
-pub struct Message {
+pub struct HistoryMessage {
     date: NaiveDateTime,
     chat: String,
     user: String,
@@ -16,7 +15,7 @@ pub struct History {
     file: String,
     exists: bool,
     expiration: u32,
-    messages: Vec<Message>,
+    messages: Vec<HistoryMessage>,
 }
 
 impl History {
@@ -33,7 +32,7 @@ impl History {
         let local_time = Local::now();
         let naive_time: NaiveDateTime = local_time.naive_local();
 
-        self.messages.push(Message {
+        self.messages.push(HistoryMessage {
             date: naive_time,
             chat: chat.to_string(),
             user: user.to_string(),
@@ -46,20 +45,16 @@ impl History {
         fs::write(&self.file, serialized.as_str())
             .expect("read_to_string() failed");
     }
-    pub fn get_completions(&self) -> Vec<ChatCompletionMessage> {
+    pub fn get_completions(&self) -> Vec<ichat::Message> {
         let mut completions = vec![];
         for message in &self.messages {
-            completions.push(ChatCompletionMessage {
-                role: ChatCompletionMessageRole::User,
-                content: Some(message.user.to_owned()),
-                name: None,
-                function_call: None,
+            completions.push(ichat::Message {
+                role: Role::User,
+                content: message.user.to_owned(),
             });
-            completions.push(ChatCompletionMessage {
-                role: ChatCompletionMessageRole::Assistant,
-                content: Some(message.assistant.to_owned()),
-                name: None,
-                function_call: None,
+            completions.push(ichat::Message {
+                role: Role::Assistant,
+                content: message.assistant.to_owned(),
             });
         }
         return completions;
@@ -77,7 +72,7 @@ impl History {
         if self.exists {
             let contents = fs::read_to_string(&self.file)
                 .expect(&*format!("Failed to read file {}", self.file));
-            let messages: Vec<Message> = serde_json::from_str(&contents)
+            let messages: Vec<HistoryMessage> = serde_json::from_str(&contents)
                 .expect(&*format!("Failed to parse json in {}", self.file));
 
             for message in messages {
