@@ -19,10 +19,8 @@ jobs:
       - name: Set LIBCLANG_PATH
         run: echo "LIBCLANG_PATH=$(pwd)" >> "$GITHUB_ENV"
         working-directory: ${{ env.LLVM_PATH }}/lib
-      - name: ls libclang
-        run: ls -la ${{ env.LLVM_PATH }}/lib
       - name: Link libclang
-        run: ln -sf ${{ env.LLVM_PATH }}/lib/libclang.so.16.0.4 /usr/lib/libclang.so
+        run: sudo ln -sf ${{ env.LLVM_PATH }}/lib/libclang.so.16.0.4 /usr/lib/libclang.so
       - name: echo LIBCLANG_PATH
         run: echo "LIBCLANG_PATH=$LIBCLANG_PATH"
       - uses: actions/checkout@master
