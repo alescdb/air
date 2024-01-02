@@ -16,17 +16,15 @@ jobs:
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: "16.0"
-      - name: echo LIBCLANG_PATH
-        run: echo "LIBCLANG_PATH=$(pwd)"
-        working-directory: ${{ env.LLVM_PATH }}/lib
       - name: Set LIBCLANG_PATH
-        run: echo "LIBCLANG_PATH=$(pwd)" >> $env:GITHUB_ENV
+        run: echo "LIBCLANG_PATH=$(pwd)" >> "$GITHUB_ENV"
         working-directory: ${{ env.LLVM_PATH }}/lib
+      - name: echo LIBCLANG_PATH
+        run: echo "LIBCLANG_PATH=$LIBCLANG_PATH"
       - uses: actions/checkout@master
       - name: Compile and release
         uses: rust-build/rust-build.action@v1.4.4
         env:
-          LIBCLANG_PATH: ${{ env.LLVM_PATH }}/lib
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         with:
           RUSTTARGET: ${{ matrix.target }}
