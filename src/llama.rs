@@ -59,8 +59,13 @@ impl IChat for LLamaChat {
 
         let pfmt = self.get_prompt(&prompt);
 
-        log::info!("{}", pfmt);
-        log::info!("Prompt : {}", pfmt);
+        log::debug!("Temp.   : {}", predict_options.temperature);
+        log::debug!("Top_k   : {}", predict_options.top_k);
+        log::debug!("Top_p   : {}", predict_options.top_p);
+        log::debug!("Threads : {}", predict_options.threads);
+        log::debug!("Tokens  : {}", predict_options.tokens);
+        log::debug!("Prompt  : {}", pfmt);
+        
         let _ = llama.predict(pfmt, predict_options)?;
 
         return Ok(String::from(""));
