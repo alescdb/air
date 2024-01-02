@@ -16,8 +16,11 @@ jobs:
         uses: KyleMayes/install-llvm-action@v1
         with:
           version: "16.0"
-      - name: Symlink libclang.so (Linux)
-        run: sudo cp -va * /usr/lib/
+      - name: echo LIBCLANG_PATH
+        run: echo "LIBCLANG_PATH=$(pwd)"
+        working-directory: ${{ env.LLVM_PATH }}/lib
+      - name: Set LIBCLANG_PATH
+        run: echo "LIBCLANG_PATH=$(pwd)" >> $env:GITHUB_ENV
         working-directory: ${{ env.LLVM_PATH }}/lib
       - uses: actions/checkout@master
       - name: Compile and release
