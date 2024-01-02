@@ -1,5 +1,9 @@
 use getopts::Options;
 
+const PKG_NAME: Option<&str> = option_env!("CARGO_PKG_NAME");
+const PKG_VERSION: Option<&str> = option_env!("CARGO_PKG_VERSION");
+const PKG_AUTHOR: Option<&str> = option_env!("CARGO_PKG_AUTHORS");
+
 pub struct CommandLine {
     pub verbose: bool,
     pub clear: bool,
@@ -39,7 +43,18 @@ impl CommandLine {
             Err(fail) => return Err(fail.to_string()),
         };
 
-        let usage = opts.usage(&format!("Usage: {} [options] <prompt>", args[0]));
+        let pname = PKG_NAME.unwrap_or("aid");
+        let header = format!(
+            "{} v{} (c) {}",
+            pname,
+            PKG_VERSION.unwrap_or("?.?.?"),
+            PKG_AUTHOR.unwrap_or("???")
+        );
+        let usage = opts.usage(&format!(
+            "{}\nUsage: {} [options] <prompt>",
+            header, 
+            pname
+        ));
         if matches.opt_present("h") {
             return Err(usage);
         }
