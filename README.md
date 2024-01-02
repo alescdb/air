@@ -72,15 +72,20 @@ Options:
 | `markdown`   | Parse markdown (default to `true`) |
 | `system`     | System prompt (not required)       |
 | `expiration` | Hisory expiration (in sec)         |
-| `main_gpu`   | See [llama_cpp_rs](https://crates.io/crates/llama_cpp_rs/) |
 
 Local llama models :
 
-| name         | value                              |
-|--------------|------------------------------------|
-| `name`       | Name (use with `-l`)               |
-| `model`      | Model path                         |
-| `prompt`     | Prompt format for the model        |
+| name           | value                              |
+|----------------|------------------------------------|
+| `name`         | Name (use with `-l`)               |
+| `model`        | Model path                         |
+| `prompt`       | Prompt format for the model        |
+| `temperature`  | The temperature parameter          |
+| `n_gpu_layers` | Number of layers to offload to GPU |
+| `tokens`       | Tokens                             |
+| `threads`      | Threads                            |
+| `top_k`        | The top-k sampling parameter.      |
+| `top_p`        | The top-p sampling parameter.      |
 
 ### TODO
 

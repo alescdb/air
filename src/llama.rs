@@ -1,15 +1,20 @@
-use crate::ichat::{IChat, Message};
+use std::io::Write;
+
+use crate::{
+    ichat::{IChat, Message},
+    setup::LLamaSetup,
+};
 use async_trait::async_trait;
 use llama_cpp_rs::{
     options::{ModelOptions, PredictOptions},
     LLama,
 };
 
+// https://github.com/mdrokz/rust-llama.cpp
+
 pub struct LLamaChat {
-    pub model: String,
+    pub setup: LLamaSetup,
     pub system: Option<String>,
-    pub prompt_template: Option<String>,
-    main_gpu: String,
 }
 
 #[async_trait]
@@ -31,50 +36,59 @@ impl IChat for LLamaChat {
         prompt: String,
         _history: Option<Vec<Message>>,
     ) -> Result<String, Box<dyn std::error::Error>> {
-        let model_options: ModelOptions = ModelOptions {
-            main_gpu: self.main_gpu.clone(),
+        let model_options = ModelOptions {
+            n_gpu_layers: self.setup.n_gpu_layers.unwrap_or(0),
+            ..Default::default()
+        };
+        let llama = LLama::new(self.setup.model.clone(), &model_options).unwrap();
+
+        let def = PredictOptions::default();
+        let predict_options = PredictOptions {
+            tokens: self.setup.tokens.unwrap_or(def.tokens),
+            threads: self.setup.threads.unwrap_or(def.threads),
+            top_k: self.setup.top_k.unwrap_or(def.top_k),
+            top_p: self.setup.top_p.unwrap_or(def.top_p),
+            temperature: self.setup.temperature.unwrap_or(def.temperature),
+            token_callback: Some(Box::new(|token| {
+                print!("{}", token);
+                std::io::stdout().flush().unwrap();
+                true
+            })),
             ..Default::default()
         };
 
-        let llama: LLama = LLama::new(self.model.clone(), &model_options).unwrap();
-        let predict_options: PredictOptions = PredictOptions {
-            debug_mode: false,
-            temperature: 0.2,
-            tokens: 512,
-            main_gpu: self.main_gpu.clone(),
-            ..Default::default()
-        };
-        let prompt_fmt = self.get_prompt(prompt);
-        log::debug!("Prompt Template : {}", prompt_fmt);
+        let pfmt = self.get_prompt(&prompt);
 
-        return Ok(llama.predict(prompt_fmt.into(), predict_options).unwrap());
+        log::info!("{}", pfmt);
+        log::info!("Prompt : {}", pfmt);
+        let _ = llama.predict(pfmt, predict_options)?;
+
+        return Ok(String::from(""));
     }
 }
 
 impl LLamaChat {
-    fn get_prompt(&self, prompt: String) -> String {
-        if self.prompt_template.is_none() {
-            return prompt;
+    fn get_prompt(&self, prompt: &str) -> String {
+        if self.setup.prompt.is_none() {
+            return prompt.to_string();
         }
-
         let mut sys = "".to_string();
         if self.system.is_some() {
             sys = self.system.clone().unwrap();
         }
         return self
-            .prompt_template
+            .setup
+            .prompt
             .clone()
             .unwrap()
             .replace("{system}", &sys)
             .replace("{prompt}", &prompt)
             .to_string();
     }
-    pub fn new(model: String, prompt_template: Option<String>, main_gpu: String) -> Self {
+    pub fn new(setup: &LLamaSetup) -> Self {
         return LLamaChat {
-            model,
+            setup: setup.clone(),
             system: None,
-            prompt_template,
-            main_gpu,
         };
     }
 }

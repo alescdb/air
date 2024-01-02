@@ -9,11 +9,17 @@ const EMPTY_KEY: &str = "<enter your openai api key here>";
 const DEFAULT_SYSTEM: &str = "Your are a Linux assistant and a coder.";
 const DEFAULT_EXPIRATION: u32 = 60 * 60 * 24; // 24h
 
-#[derive(Serialize, Deserialize, Debug)]
+#[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LLamaSetup {
     pub name: String,
     pub model: String,
     pub prompt: Option<String>,
+    pub temperature: Option<f32>,
+    pub n_gpu_layers: Option<i32>,
+    pub tokens: Option<i32>,
+    pub threads: Option<i32>,
+    pub top_k: Option<i32>,
+    pub top_p: Option<f32>,
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -23,7 +29,6 @@ pub struct Setup {
     pub system: Option<String>,
     pub markdown: Option<bool>,
     pub expiration: Option<u32>,
-    pub main_gpu: Option<String>,
     pub local: Option<Vec<LLamaSetup>>,
 }
 
@@ -35,7 +40,6 @@ impl Default for Setup {
             system: Some(DEFAULT_SYSTEM.to_string()),
             markdown: Some(true),
             expiration: Some(DEFAULT_EXPIRATION),
-            main_gpu: None,
             local: None,
         }
     }
@@ -84,16 +88,18 @@ impl Setup {
         return self.system.clone().unwrap_or(DEFAULT_SYSTEM.to_string());
     }
 
-    pub fn get_main_gpu(&self) -> String {
-        return self.main_gpu.clone().unwrap_or("".to_string());
-    }
-
     fn write(config: &FileInfo) -> Result<(), std::io::Error> {
         let serialized = serde_json::to_string_pretty(&Setup {
             local: Some(vec![LLamaSetup {
                 name: "llama2".to_string(),
                 model: "/opt/models/llama.gguf".to_string(),
                 prompt: None,
+                temperature: Some(0.2),
+                n_gpu_layers: None,
+                tokens: None,
+                threads: None,
+                top_k: None,
+                top_p: None,
             }]),
             ..Default::default()
         })?;
@@ -107,7 +113,6 @@ impl Setup {
         termimad::print_inline(&format!("*MODEL*      => `{}`\n", self.get_model()));
         termimad::print_inline(&format!("*SYSTEM*     => `{}`\n", self.get_system()));
         termimad::print_inline(&format!("*MARKDOWN*   => `{}`\n", self.get_markdown()));
-        termimad::print_inline(&format!("*MAIN GPU*   => `{}`\n", self.get_main_gpu()));
         termimad::print_inline(&format!("*EXPIRATION* => `{}`\n", self.get_expiration()));
 
         if let Some(local) = &self.local {
