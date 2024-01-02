@@ -15,7 +15,7 @@ jobs:
       - name: Install toolchain dependencies
         shell: bash
         run: |
-          apt-get update && apt-get install -y build-essential curl clang llvm
+          sudo apt-get update && sudo apt-get install -y build-essential curl clang llvm
       - uses: actions/checkout@master
       - name: Compile and release
         uses: rust-build/rust-build.action@v1.4.4
