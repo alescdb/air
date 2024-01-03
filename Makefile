@@ -29,3 +29,14 @@ install-home: ${BINARY}
 publish: srcinfo
 	git tag -a "v$(VERSION)" -m "v$(VERSION)"
 	git push origin "v$(VERSION)"
+
+bump:
+	$(eval V=$(shell echo "$(VERSION)" | cut -d '.' -f 1))
+	$(eval R=$(shell echo "$(VERSION)" | cut -d '.' -f 2))
+	$(eval B=$(shell echo "$(VERSION)" | cut -d '.' -f 3))
+	$(eval X=$(shell expr ${B} + 1))
+	$(eval NEW=$(shell echo "${V}.${R}.${X}"))
+	@echo "Version Bump : $(VERSION) => $(NEW)"
+	@sed -E -i 's/^version(.*)/version = "$(NEW)"/' Cargo.toml
+	@make srcinfo
+
