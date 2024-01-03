@@ -1,11 +1,11 @@
 name: Build and release
 
-on: workflow_dispatch
+#on: workflow_dispatch
 
-#on:
-#  push:
-#    tags:
-#      - "v*.*.*"
+on:
+  push:
+    tags:
+      - "v*.*.*"
 
 jobs:
   release:
