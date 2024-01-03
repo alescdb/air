@@ -54,9 +54,9 @@ fn get_chat(local: &Option<String>, setup: &Setup, options: &CommandLine) -> Res
 
 fn init_log(verbose: bool) {
     let level = if verbose {
-        log::LevelFilter::Warn
+        log::LevelFilter::Debug
     } else {
-        log::LevelFilter::Info
+        log::LevelFilter::Warn
     };
 
     env_logger::Builder::new()
@@ -162,7 +162,9 @@ async fn main() -> Result<(), std::io::Error> {
 
     history.add(ichat.get_name(), &*options.prompt, &*answer.clone());
     match history.save() {
-        Ok(_) => {}
+        Ok(_) => {
+            log::info!("History saved.")
+        }
         Err(e) => {
             log::error!("{}", e);
         }

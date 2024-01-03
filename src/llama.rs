@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use crate::{
-    ichat::{IChat, Message},
+    ichat::{IChat, Message, Role},
     setup::LLamaSetup,
 };
 use async_trait::async_trait;
@@ -36,7 +36,7 @@ impl IChat for LLamaChat {
     async fn chat(
         &mut self,
         prompt: String,
-        _history: Option<Vec<Message>>,
+        history: Option<Vec<Message>>,
     ) -> Result<String, Box<dyn std::error::Error>> {
         let model_options = ModelOptions {
             n_gpu_layers: self.setup.n_gpu_layers.unwrap_or(0),
@@ -62,23 +62,57 @@ impl IChat for LLamaChat {
             ..Default::default()
         };
 
-        let pfmt = self.get_prompt(&prompt);
+        let pfmt = self.get_prompt(&prompt, &history);
 
-        log::debug!("Temp.   : {}", predict_options.temperature);
-        log::debug!("Top_k   : {}", predict_options.top_k);
-        log::debug!("Top_p   : {}", predict_options.top_p);
-        log::debug!("Threads : {}", predict_options.threads);
-        log::debug!("Tokens  : {}", predict_options.tokens);
-        log::debug!("Prompt  : {}", pfmt);
+        log::info!("Temp.   : {}", predict_options.temperature);
+        log::info!("Top_k   : {}", predict_options.top_k);
+        log::info!("Top_p   : {}", predict_options.top_p);
+        log::info!("Threads : {}", predict_options.threads);
+        log::info!("Tokens  : {}", predict_options.tokens);
+        log::info!("Prompt  : {}", pfmt);
 
-        let _ = llama.predict(pfmt, predict_options)?;
+        let answer = llama.predict(pfmt, predict_options)?;
 
-        return Ok(String::from(""));
+        return Ok(answer);
     }
 }
 
 impl LLamaChat {
-    fn get_prompt(&self, prompt: &str) -> String {
+    fn get_prompt(&self, prompt: &str, history: &Option<Vec<Message>>) -> String {
+        if self.setup.prompt.is_none() {
+            return prompt.into();
+        }
+
+        let mut hst = "".to_string();
+        if let Some(format) = &self.setup.history {
+            if let Some(history) = history {
+                let mut sh = format.clone();
+                for item in history {
+                    if item.role == Role::User {
+                        sh = sh.replace("{user}", &item.content);
+                    } else if item.role == Role::Assistant {
+                        sh = sh.replace("{assistant}", &item.content);
+                    }
+                }
+                // in case we missed one...
+                hst += &sh
+                    .replace("{user}", "")
+                    .replace("{assistant}", "");
+            }
+        }
+
+        return self
+            .setup
+            .prompt
+            .clone()
+            .unwrap()
+            .replace("{system}", self.system.as_ref().unwrap_or(&"".into()))
+            .replace("{prompt}", prompt)
+            .replace("{history}", &hst);
+    }
+
+    #[allow(dead_code)]
+    fn get_prompt_old(&self, prompt: &str) -> String {
         if self.setup.prompt.is_none() {
             return prompt.to_string();
         }

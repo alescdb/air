@@ -1,7 +1,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
-#[derive(Serialize, Deserialize, Debug, Clone)]
+#[derive(PartialEq, Serialize, Deserialize, Debug, Clone)]
 pub enum Role {
     #[serde(rename = "user")]
     User,
@@ -37,5 +37,9 @@ pub trait IChat {
     fn get_name(&mut self) -> &str;
     fn set_system(&mut self, system: String);
     fn set_model(&mut self, model: String);
-    async fn chat(&mut self, prompt: String, history: Option<Vec<Message>>) -> Result<String, Box<dyn std::error::Error>>;
+    async fn chat(
+        &mut self,
+        prompt: String,
+        history: Option<Vec<Message>>,
+    ) -> Result<String, Box<dyn std::error::Error>>;
 }

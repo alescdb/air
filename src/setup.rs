@@ -9,11 +9,23 @@ const EMPTY_KEY: &str = "<enter your openai api key here>";
 const DEFAULT_SYSTEM: &str = "Your are a Linux assistant and a coder.";
 const DEFAULT_EXPIRATION: u32 = 60 * 60 * 24; // 24h
 
+const EX_NAME: &str = "vigogne";
+const EX_MODEL: &str = "/opt/models/vigogne-2-7b-chat.Q4_K_M.gguf";
+const EX_PROMPT: &str = "{system}\n\n{history}<|UTILISATEUR|>: {prompt}\n<|ASSISTANT|>: \n";
+const EX_HISTORY: &str = "<|UTILISATEUR|>: {user}\n<|ASSISTANT|>: {assistant}\n";
+const EX_N_GPU_LAYERS: i32 = 12;
+const EX_TOKENS: i32 = 0;
+const EX_THREADS: i32 = 14;
+const EX_TOP_K: i32 = 90;
+const EX_TOP_P: f32 = 0.8;
+const EX_TEMPERATURE: f32 = 0.2;
+
 #[derive(Serialize, Deserialize, Clone, Debug)]
 pub struct LLamaSetup {
     pub name: String,
     pub model: String,
     pub prompt: Option<String>,
+    pub history: Option<String>,
     pub temperature: Option<f32>,
     pub n_gpu_layers: Option<i32>,
     pub tokens: Option<i32>,
@@ -50,13 +62,16 @@ impl Setup {
     pub fn new() -> Result<Self, std::io::Error> {
         let config = get_config_path("setup.json");
         if !config.exists {
-            match Setup::write(&config) {
-                Ok(_) => (),
-                Err(e) => log::error!("{}", e),
-            };
+            // match Setup::write(&config) {
+            //     Ok(_) => (),
+            //     Err(e) => log::error!("{}", e),
+            // };
             return Err(std::io::Error::new(
                 ErrorKind::NotFound,
-                format!("Setup file {} does not exists !", &config.path),
+                format!("Setup file {} does not exists !\nSetup example:\n{}\n", 
+                    &config.path,
+                    &Setup::get_example()?
+                ),
             ));
         }
 
@@ -66,7 +81,7 @@ impl Setup {
         if setup.apikey.is_empty() || setup.apikey == EMPTY_KEY {
             return Err(std::io::Error::new(
                 ErrorKind::NotFound,
-                format!("Edit setup file {}, and set your api key !", &config.path),
+                format!("Edit setup file {}, and set your api key !",&config.path),
             ));
         }
         return Ok(setup);
@@ -88,23 +103,27 @@ impl Setup {
         return self.system.clone().unwrap_or(DEFAULT_SYSTEM.to_string());
     }
 
-    fn write(config: &FileInfo) -> Result<(), std::io::Error> {
-        let serialized = serde_json::to_string_pretty(&Setup {
+    fn get_example() -> Result<String, serde_json::error::Error> {
+        return Ok(serde_json::to_string_pretty(&Setup {
             local: Some(vec![LLamaSetup {
-                name: "llama2".to_string(),
-                model: "/opt/models/llama.gguf".to_string(),
-                prompt: None,
-                temperature: Some(0.2),
-                n_gpu_layers: None,
-                tokens: None,
-                threads: None,
-                top_k: None,
-                top_p: None,
+                name: EX_NAME.into(),
+                model: EX_MODEL.into(),
+                prompt: Some(EX_PROMPT.into()),
+                history: Some(EX_HISTORY.into()),
+                n_gpu_layers: Some(EX_N_GPU_LAYERS),
+                tokens: Some(EX_TOKENS),
+                threads: Some(EX_THREADS),
+                top_k: Some(EX_TOP_K),
+                top_p: Some(EX_TOP_P),
+                temperature: Some(EX_TEMPERATURE),
             }]),
             ..Default::default()
-        })?;
+        })?);
+    }
 
-        fs::write(&config.path, serialized.as_str())?;
+    #[allow(dead_code)]
+    fn write(config: &FileInfo) -> Result<(), std::io::Error> {
+        fs::write(&config.path, Setup::get_example()?.to_string())?;
         Ok(())
     }
 
