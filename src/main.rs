@@ -33,14 +33,14 @@ fn get_local<'a>(local: &'a [LLamaSetup], name: &str) -> Option<&'a LLamaSetup> 
     return None;
 }
 
-fn get_chat(local: &Option<String>, setup: &Setup) -> Result<Box<dyn IChat>, String> {
+fn get_chat(local: &Option<String>, setup: &Setup, options: &CommandLine) -> Result<Box<dyn IChat>, String> {
     if let Some(local) = local {
         if let Some(locals) = &setup.local {
             let _name: String = local.clone();
             let llama: Option<&LLamaSetup> = get_local(&locals, &_name);
 
             if let Some(llama) = llama {
-                return Ok(Box::new(LLamaChat::new(llama)));
+                return Ok(Box::new(LLamaChat::new(llama, options.verbose)));
             } else {
                 return Err(format!(
                     "Can't find local model name in setup : '{}'",
@@ -95,7 +95,7 @@ async fn main() -> Result<(), std::io::Error> {
     init_log(options.verbose);
 
     let mut history = History::new(setup.get_expiration());
-    let mut ichat = match get_chat(&options.local, &setup) {
+    let mut ichat = match get_chat(&options.local, &setup, &options) {
         Ok(chat) => chat,
         Err(message) => {
             log::error!("{}", message);

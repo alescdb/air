@@ -28,13 +28,14 @@ dependencies = [
 
 [[package]]
 name = "air"
-version = "0.6.2"
+version = "0.6.3"
 dependencies = [
  "async-trait",
  "chrono",
  "dirs",
  "env_logger",
  "getopts",
+ "libc",
  "llama_cpp_rs",
  "log",
  "reqwest",

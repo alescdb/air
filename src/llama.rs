@@ -5,6 +5,7 @@ use crate::{
     setup::LLamaSetup,
 };
 use async_trait::async_trait;
+use libc::c_char;
 use llama_cpp_rs::{
     options::{ModelOptions, PredictOptions},
     LLama,
@@ -15,6 +16,7 @@ use llama_cpp_rs::{
 pub struct LLamaChat {
     pub setup: LLamaSetup,
     pub system: Option<String>,
+    pub verbose: bool,
 }
 
 #[async_trait]
@@ -40,7 +42,10 @@ impl IChat for LLamaChat {
             n_gpu_layers: self.setup.n_gpu_layers.unwrap_or(0),
             ..Default::default()
         };
+
+        self.close_stderr();
         let llama = LLama::new(self.setup.model.clone(), &model_options).unwrap();
+        self.open_stderr();
 
         let def = PredictOptions::default();
         let predict_options = PredictOptions {
@@ -65,7 +70,7 @@ impl IChat for LLamaChat {
         log::debug!("Threads : {}", predict_options.threads);
         log::debug!("Tokens  : {}", predict_options.tokens);
         log::debug!("Prompt  : {}", pfmt);
-        
+
         let _ = llama.predict(pfmt, predict_options)?;
 
         return Ok(String::from(""));
@@ -90,10 +95,30 @@ impl LLamaChat {
             .replace("{prompt}", &prompt)
             .to_string();
     }
-    pub fn new(setup: &LLamaSetup) -> Self {
+
+    pub fn new(setup: &LLamaSetup, verbose: bool) -> Self {
         return LLamaChat {
             setup: setup.clone(),
             system: None,
+            verbose,
         };
+    }
+
+    fn close_stderr(&self) {
+        if !self.verbose {
+            unsafe {
+                libc::close(libc::STDERR_FILENO);
+            }
+        }
+    }
+
+    fn open_stderr(&self) {
+        if !self.verbose {
+            unsafe {
+                let wr = "w".as_ptr() as *const c_char;
+                let fd = libc::fdopen(libc::STDERR_FILENO, wr);
+                libc::dup2(fd as i32, libc::STDERR_FILENO);
+            }
+        }
     }
 }

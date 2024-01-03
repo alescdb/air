@@ -1,7 +1,7 @@
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [package]
 name = "air"
-version = "0.6.2"
+version = "0.6.3"
 authors = ["Alexandre Del Bigio"]
 edition = "2021"
 repository = "https://github.com/alescdb/air.git"
@@ -28,3 +28,4 @@ async-trait = "0.1.77"
 log = "0.4.20"
 env_logger = "0.10.1"
 reqwest = { version = "0.11.23", features = ["json"] }
+libc = "0.2.151"
