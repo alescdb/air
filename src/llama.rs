@@ -1,7 +1,7 @@
 use std::io::Write;
 
 use crate::{
-    ichat::{IChat, Message, Role},
+    ichat::{IChat, Message},
     setup::LLamaSetup,
 };
 use async_trait::async_trait;
@@ -78,12 +78,13 @@ impl IChat for LLamaChat {
 }
 
 impl LLamaChat {
-    fn get_prompt(&self, prompt: &str, history: &Option<Vec<Message>>) -> String {
+    fn get_prompt(&self, prompt: &str, _history: &Option<Vec<Message>>) -> String {
         if self.setup.prompt.is_none() {
             return prompt.into();
         }
 
-        let mut hst = "".to_string();
+        let hst = "".to_string();
+        /*
         if let Some(format) = &self.setup.history {
             if let Some(history) = history {
                 let mut sh = format.clone();
@@ -100,6 +101,7 @@ impl LLamaChat {
                 }
             }
         }
+        */
 
         return self
             .setup

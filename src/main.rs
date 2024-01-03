@@ -33,7 +33,11 @@ fn get_local<'a>(local: &'a [LLamaSetup], name: &str) -> Option<&'a LLamaSetup> 
     return None;
 }
 
-fn get_chat(local: &Option<String>, setup: &Setup, options: &CommandLine) -> Result<Box<dyn IChat>, String> {
+fn get_chat(
+    local: &Option<String>,
+    setup: &Setup,
+    options: &CommandLine,
+) -> Result<Box<dyn IChat>, String> {
     if let Some(local) = local {
         if let Some(locals) = &setup.local {
             let _name: String = local.clone();
@@ -160,13 +164,15 @@ async fn main() -> Result<(), std::io::Error> {
     };
     display(options.markdown, answer.clone());
 
-    history.add(ichat.get_name(), &*options.prompt, &*answer.clone());
-    match history.save() {
-        Ok(_) => {
-            log::info!("History saved.")
-        }
-        Err(e) => {
-            log::error!("{}", e);
+    if answer.trim().len() > 0 {
+        history.add(ichat.get_name(), &*options.prompt, &*answer.clone());
+        match history.save() {
+            Ok(_) => {
+                log::info!("History saved.")
+            }
+            Err(e) => {
+                log::error!("{}", e);
+            }
         }
     }
     Ok(())
