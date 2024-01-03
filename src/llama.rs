@@ -93,11 +93,11 @@ impl LLamaChat {
                     } else if item.role == Role::Assistant {
                         sh = sh.replace("{assistant}", &item.content);
                     }
+                    // in case one was missing...
+                    hst += &sh
+                        .replace("{user}", "")
+                        .replace("{assistant}", "");
                 }
-                // in case we missed one...
-                hst += &sh
-                    .replace("{user}", "")
-                    .replace("{assistant}", "");
             }
         }
 
