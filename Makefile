@@ -25,3 +25,7 @@ install: clean srcinfo
 
 install-home: ${BINARY}
 	cargo install --path . --profile release
+
+publish: srcinfo
+	git tag -a "v$(VERSION)" -m "v$(VERSION)"
+	git push origin "v$(VERSION)"
