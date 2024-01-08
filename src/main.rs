@@ -117,6 +117,19 @@ async fn main() -> Result<(), std::io::Error> {
         options.display();
     }
 
+    if options.list {
+        println!("Available models:");
+        for llm in &setup.local.unwrap_or(Vec::new()) {
+            let exists = if llm.model_exist(&llm) {
+                Stylize::green("✓").to_string()
+            } else {
+                Stylize::red("✗").to_string()
+            };
+            println!("  - {} {}", llm.name, exists);
+        }
+        std::process::exit(0);
+    }
+
     ichat.set_model(setup.get_model());
     if let Some(system) = setup.system {
         if !system.trim().is_empty() {
@@ -162,7 +175,10 @@ async fn main() -> Result<(), std::io::Error> {
             std::process::exit(5);
         }
     };
-    display(options.markdown, answer.clone());
+
+    if ichat.get_name() != "llama" {
+        display(options.markdown, answer.clone());
+    }
 
     if answer.trim().len() > 0 {
         history.add(ichat.get_name(), &*options.prompt, &*answer.clone());

@@ -44,17 +44,25 @@ impl IChat for LLamaChat {
         };
 
         self.close_stderr();
-        let llama = LLama::new(self.setup.model.clone(), &model_options).unwrap();
-        self.open_stderr();
+        let llama: LLama = match LLama::new(self.setup.model.clone(), &model_options) {
+            Ok(llama) => {
+                self.open_stderr();
+                llama
+            },
+            Err(e) => {
+                self.open_stderr();
+                return Err(e);
+            }
+        };
 
-        let def = PredictOptions::default();
-        let predict_options = PredictOptions {
+        let def: PredictOptions = PredictOptions::default();
+        let predict_options: PredictOptions = PredictOptions {
             tokens: self.setup.tokens.unwrap_or(def.tokens),
             threads: self.setup.threads.unwrap_or(def.threads),
             top_k: self.setup.top_k.unwrap_or(def.top_k),
             top_p: self.setup.top_p.unwrap_or(def.top_p),
             temperature: self.setup.temperature.unwrap_or(def.temperature),
-            token_callback: Some(Box::new(|token| {
+            token_callback: Some(Box::new(|token: String| {
                 print!("{}", token);
                 std::io::stdout().flush().unwrap();
                 true
@@ -64,15 +72,17 @@ impl IChat for LLamaChat {
 
         let pfmt = self.get_prompt(&prompt, &history);
 
-        log::info!("Temp.   : {}", predict_options.temperature);
-        log::info!("Top_k   : {}", predict_options.top_k);
-        log::info!("Top_p   : {}", predict_options.top_p);
-        log::info!("Threads : {}", predict_options.threads);
-        log::info!("Tokens  : {}", predict_options.tokens);
-        log::info!("Prompt  : {}", pfmt);
+        log::info!("n_gpu_layers : {}", model_options.n_gpu_layers);
+        log::info!("temperature  : {}", predict_options.temperature);
+        log::info!("top_k        : {}", predict_options.top_k);
+        log::info!("top_p        : {}", predict_options.top_p);
+        log::info!("threads      : {}", predict_options.threads);
+        log::info!("tokens       : {}", predict_options.tokens);
+        log::info!("prompt       : {}", pfmt);
 
         let answer = llama.predict(pfmt, predict_options)?;
-
+        println!("");
+        
         return Ok(answer);
     }
 }

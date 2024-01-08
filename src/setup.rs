@@ -3,6 +3,7 @@ use serde::{Deserialize, Serialize};
 use std::fmt::Debug;
 use std::fs;
 use std::io::ErrorKind;
+use std::path::Path;
 
 pub(crate) const DEFAULT_MODEL: &str = "gpt-4-1106-preview";
 const EMPTY_KEY: &str = "<enter your openai api key here>";
@@ -32,6 +33,13 @@ pub struct LLamaSetup {
     pub threads: Option<i32>,
     pub top_k: Option<i32>,
     pub top_p: Option<f32>,
+}
+
+impl LLamaSetup {
+    pub fn model_exist(&self, llama: &LLamaSetup) -> bool {
+        let path = Path::new(&llama.model);
+        return path.exists();
+    }
 }
 
 #[derive(Serialize, Deserialize, Debug)]
@@ -68,7 +76,8 @@ impl Setup {
             // };
             return Err(std::io::Error::new(
                 ErrorKind::NotFound,
-                format!("Setup file {} does not exists !\nSetup example:\n{}\n", 
+                format!(
+                    "Setup file {} does not exists !\nSetup example:\n{}\n",
                     &config.path,
                     &Setup::get_example()?
                 ),
@@ -81,7 +90,7 @@ impl Setup {
         if setup.apikey.is_empty() || setup.apikey == EMPTY_KEY {
             return Err(std::io::Error::new(
                 ErrorKind::NotFound,
-                format!("Edit setup file {}, and set your api key !",&config.path),
+                format!("Edit setup file {}, and set your api key !", &config.path),
             ));
         }
         return Ok(setup);

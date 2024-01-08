@@ -8,6 +8,7 @@ pub struct CommandLine {
     pub verbose: bool,
     pub clear: bool,
     pub markdown: bool,
+    pub list: bool,
     pub prompt: String,
     pub local: Option<String>,
     pub usage: String,
@@ -19,6 +20,7 @@ impl Default for CommandLine {
             verbose: if cfg!(debug_assertions) { true } else { false },
             clear: false,
             markdown: true,
+            list: false,
             prompt: "".to_string(),
             local: None,
             usage: "".to_string(),
@@ -33,6 +35,7 @@ impl CommandLine {
         let mut opts = Options::new();
 
         opts.optopt("l", "local", "Run local model (llama-cpp)", "name");
+        opts.optflag("L", "list", "List local models (llama-cpp)");
         opts.optflag("c", "clear", "Clear history");
         opts.optflag("v", "verbose", "Verbose/debug");
         opts.optflag("m", "markdown", "Display as markdown");
@@ -50,11 +53,7 @@ impl CommandLine {
             PKG_VERSION.unwrap_or("?.?.?"),
             PKG_AUTHOR.unwrap_or("???")
         );
-        let usage = opts.usage(&format!(
-            "{}\nUsage: {} [options] <prompt>",
-            header, 
-            pname
-        ));
+        let usage = opts.usage(&format!("{}\nUsage: {} [options] <prompt>", header, pname));
         if matches.opt_present("h") {
             return Err(usage);
         }
@@ -68,6 +67,7 @@ impl CommandLine {
             markdown: md,
             prompt: matches.free.join(" ").trim().to_string(),
             local: matches.opt_str("l"),
+            list: matches.opt_present("list"),
             usage,
         });
     }
