@@ -9,6 +9,7 @@ pub struct CommandLine {
     pub clear: bool,
     pub markdown: bool,
     pub list: bool,
+    pub system: Option<String>,
     pub prompt: String,
     pub local: Option<String>,
     pub usage: String,
@@ -21,6 +22,7 @@ impl Default for CommandLine {
             clear: false,
             markdown: true,
             list: false,
+            system: None,
             prompt: "".to_string(),
             local: None,
             usage: "".to_string(),
@@ -30,7 +32,7 @@ impl Default for CommandLine {
 
 #[allow(dead_code)]
 impl CommandLine {
-    pub fn new(default_markdown: bool) -> Result<Self, String> {
+    pub fn new(default_system: &str, default_markdown: bool) -> Result<Self, String> {
         let args: Vec<String> = std::env::args().collect();
         let mut opts = Options::new();
 
@@ -38,7 +40,8 @@ impl CommandLine {
         opts.optflag("L", "list", "List local models (llama-cpp)");
         opts.optflag("c", "clear", "Clear history");
         opts.optflag("v", "verbose", "Verbose/debug");
-        opts.optflag("m", "markdown", "Display as markdown");
+        opts.optflag("m", "markdown", "Toggle markdown");
+        opts.optflag("s", "system-prompt", "Set system prompt (empty for None)");
         opts.optflag("h", "help", "Help");
 
         let matches = match opts.parse(&args[1..]) {
@@ -57,14 +60,24 @@ impl CommandLine {
         if matches.opt_present("h") {
             return Err(usage);
         }
+        // toggle markdown if option -m is present
         let mut md: bool = matches.opt_present("m");
-        if md == false {
+        if md {
+            md = !default_markdown;
+        } else {
             md = default_markdown;
         }
+
+        let mut sys: String = default_system.to_string();
+        if matches.opt_present("m") {
+            sys = matches.opt_str("s").unwrap_or("".to_string());
+        }
+
         return Ok(CommandLine {
             verbose: matches.opt_present("v"),
             clear: matches.opt_present("c"),
             markdown: md,
+            system: Some(sys),
             prompt: matches.free.join(" ").trim().to_string(),
             local: matches.opt_str("l"),
             list: matches.opt_present("list"),
@@ -78,6 +91,7 @@ impl CommandLine {
         termimad::print_inline(&format!("*VERBOSE*    => `{}`\n", self.verbose));
         termimad::print_inline(&format!("*LOCAL*      => `{:?}`\n", self.local));
         termimad::print_inline(&format!("*PROMPT*     => `{}`\n", self.prompt));
+        termimad::print_inline(&format!("*SYSTEM*     => `{:?}`\n", self.system));
         termimad::print_inline("___\n");
     }
 }

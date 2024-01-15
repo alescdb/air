@@ -89,7 +89,7 @@ async fn main() -> Result<(), std::io::Error> {
             std::process::exit(10);
         }
     };
-    let options = match CommandLine::new(setup.get_markdown()) {
+    let options = match CommandLine::new(&setup.get_system(), setup.get_markdown()) {
         Ok(options) => options,
         Err(usage) => {
             println!("{}", usage);
@@ -131,7 +131,7 @@ async fn main() -> Result<(), std::io::Error> {
     }
 
     ichat.set_model(setup.get_model());
-    if let Some(system) = setup.system {
+    if let Some(system) = options.system {
         if !system.trim().is_empty() {
             ichat.set_system(system);
         }

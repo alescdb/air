@@ -61,10 +61,12 @@ impl IChat for OpenAI {
         let mut messages: Vec<Message> = vec![];
 
         if let Some(sys) = &self.system {
-            messages.push(Message {
-                role: Role::System,
-                content: sys.to_string(),
-            });
+            if sys.len() > 0 {
+                messages.push(Message {
+                    role: Role::System,
+                    content: sys.to_string(),
+                });
+            }
         }
 
         if let Some(hs) = history {
