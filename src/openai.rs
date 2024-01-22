@@ -1,6 +1,7 @@
+use crate::error::ErrorMessage;
 use crate::ichat::{IChat, Message, Role};
 use async_trait::async_trait;
-use reqwest::Client;
+use reqwest::{Client, StatusCode};
 use serde::{Deserialize, Serialize};
 
 const HEADER_AUTHORIZATION: &str = "Authorization";
@@ -24,13 +25,24 @@ pub struct OpenAIChoice {
 
 #[derive(Deserialize, Debug)]
 #[allow(dead_code)]
+pub struct OpenAIError {
+    message: Option<String>,
+    #[serde(rename = "type")]
+    error_type: Option<String>,
+    param: Option<String>,
+    code: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+#[allow(dead_code)]
 pub struct OpenAIResponse {
     id: Option<String>,
     object: Option<String>,
     created: Option<u32>,
     model: Option<String>,
-    choices: Vec<OpenAIChoice>,
+    choices: Option<Vec<OpenAIChoice>>,
     system_fingerprint: Option<String>,
+    error: Option<OpenAIError>,
 }
 
 pub struct OpenAI {
@@ -84,22 +96,42 @@ impl IChat for OpenAI {
             model: &self.model,
             messages,
         };
-        let serialized = serde_json::to_string_pretty(&completion)?;
+        let serialized: String = serde_json::to_string_pretty(&completion)?;
         log::debug!("{}\n", serialized);
 
         let client: Client = Client::new();
-        let answer = client
+        let response = client
             .post(OPENAI_URL)
             .header(HEADER_AUTHORIZATION, format!("Bearer {}", self.apikey))
             .header(HEADER_CONTENT_TYPE, CONTENT_TYPE_JSON)
             .body(serialized)
             .send()
-            .await?
-            .json::<OpenAIResponse>()
             .await?;
 
-        log::debug!("{:?}\n", answer);
-        return Ok(answer.choices.first().unwrap().message.content.clone());
+        let status_code = response.status();
+        let json = response.json::<OpenAIResponse>().await?;
+
+        log::debug!("Status Code: {:?}\n", status_code);
+        log::debug!("Response:\n{:?}\n", json);
+
+        if status_code >= StatusCode::BAD_REQUEST {
+            if let Some(e) = json.error {
+                return Err(Box::new(ErrorMessage::new(&e.message.unwrap())));
+            }
+            return Err(Box::new(ErrorMessage::new(&format!(
+                "API Error status code : {}",
+                status_code
+            ))));
+        }
+
+        if let Some(choices) = json.choices {
+            if choices.len() == 0 {
+                return Err(Box::new(ErrorMessage::new("Empty result")));
+            }
+            return Ok(choices.first().unwrap().message.content.clone());
+        }
+
+        return Err(Box::new(ErrorMessage::new("Choices not found in result")));
     }
 }
 

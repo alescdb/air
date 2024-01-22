@@ -5,6 +5,7 @@ mod openai;
 mod options;
 mod path;
 mod setup;
+mod error;
 
 use crate::history::History;
 use crate::ichat::IChat;
