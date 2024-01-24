@@ -13,6 +13,7 @@ pub struct CommandLine {
     pub prompt: String,
     pub local: Option<String>,
     pub usage: String,
+    pub scan: Option<String>,
 }
 
 impl Default for CommandLine {
@@ -26,6 +27,7 @@ impl Default for CommandLine {
             prompt: "".to_string(),
             local: None,
             usage: "".to_string(),
+            scan: None,
         }
     }
 }
@@ -37,6 +39,7 @@ impl CommandLine {
         let mut opts = Options::new();
 
         opts.optopt("l", "local", "Run local model (llama-cpp)", "name");
+        opts.optopt("x", "scan", "Scan for local models (llama-cpp)", "folder");
         opts.optflag("L", "list", "List local models (llama-cpp)");
         opts.optflag("c", "clear", "Clear history");
         opts.optflag("v", "verbose", "Verbose/debug");
@@ -80,7 +83,8 @@ impl CommandLine {
             system: Some(sys),
             prompt: matches.free.join(" ").trim().to_string(),
             local: matches.opt_str("l"),
-            list: matches.opt_present("list"),
+            list: matches.opt_present("L"),
+            scan: matches.opt_str("x"),
             usage,
         });
     }

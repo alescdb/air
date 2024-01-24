@@ -25,13 +25,21 @@ const EX_TEMPERATURE: f32 = 0.2;
 pub struct LLamaSetup {
     pub name: String,
     pub model: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub prompt: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub history: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub temperature: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub n_gpu_layers: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub tokens: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub threads: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub top_k: Option<i32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub top_p: Option<f32>,
 }
 

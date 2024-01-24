@@ -1,17 +1,19 @@
+mod error;
 mod history;
 mod ichat;
 mod llama;
 mod openai;
 mod options;
 mod path;
+mod scan;
 mod setup;
-mod error;
 
 use crate::history::History;
 use crate::ichat::IChat;
 use crate::llama::LLamaChat;
 use crate::options::CommandLine;
 use openai::OpenAI;
+use scan::scan_folder;
 use setup::{LLamaSetup, Setup};
 use std::io::Write;
 use termimad::{crossterm::style::Stylize, *};
@@ -98,6 +100,10 @@ async fn main() -> Result<(), std::io::Error> {
         }
     };
     init_log(options.verbose);
+    if let Some(scan) = options.scan {
+        scan_folder(&setup, &scan);
+        std::process::exit(0);
+    }
 
     let mut history = History::new(setup.get_expiration());
     let mut ichat = match get_chat(&options.local, &setup, &options) {
