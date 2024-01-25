@@ -85,7 +85,7 @@ fn init_log(verbose: bool) {
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
-    let setup: Setup = match Setup::new() {
+    let mut setup: Setup = match Setup::new() {
         Ok(setup) => setup,
         Err(e) => {
             println!("Error: {}", e);
@@ -101,7 +101,7 @@ async fn main() -> Result<(), std::io::Error> {
     };
     init_log(options.verbose);
     if let Some(scan) = options.scan {
-        scan_folder(&setup, &scan);
+        scan_folder(&mut setup, &scan);
         std::process::exit(0);
     }
 

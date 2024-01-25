@@ -76,7 +76,7 @@ impl Default for Setup {
 #[allow(dead_code)]
 impl Setup {
     pub fn new() -> Result<Self, std::io::Error> {
-        let config = get_config_path("setup.json");
+        let config: FileInfo = get_config_path("setup.json");
         if !config.exists {
             // match Setup::write(&config) {
             //     Ok(_) => (),
@@ -138,11 +138,11 @@ impl Setup {
         })?);
     }
 
-    #[allow(dead_code)]
-    fn write(config: &FileInfo) -> Result<(), std::io::Error> {
-        fs::write(&config.path, Setup::get_example()?.to_string())?;
-        Ok(())
-    }
+    // #[allow(dead_code)]
+    // fn write(config: &FileInfo, setup: &Setup) -> Result<(), std::io::Error> {
+    //     fs::write(&config.path, setup.to_string())?;
+    //     Ok(())
+    // }
 
     pub fn display(&self) {
         termimad::print_inline(&format!("*APIKEY*     => `{}`\n", self.apikey));
@@ -160,5 +160,18 @@ impl Setup {
             }
         }
         termimad::print_inline("___\n");
+    }
+
+    pub(crate) fn add_locals(&mut self, list: Vec<LLamaSetup>) {
+        if self.local.is_none() {
+            self.local = Some(list);
+        } else {
+            self.local.as_mut().unwrap().extend(list);
+        }
+    }
+
+    pub(crate) fn save(&self) {
+        let config: FileInfo = get_config_path("setup.json");
+        let _ = fs::write(&config.path, serde_json::to_string_pretty(&self).unwrap());
     }
 }

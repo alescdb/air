@@ -38,6 +38,7 @@ dependencies = [
  "libc",
  "llama_cpp_rs",
  "log",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",
