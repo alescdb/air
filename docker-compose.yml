@@ -1,0 +1,12 @@
+version: '3.6'
+
+services:
+  air:
+    image: air
+    container_name: air
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    command: "make"
