@@ -1,0 +1,12 @@
+version: '3.6'
+
+services:
+  aid:
+    image: aid
+    container_name: aid
+    build:
+      context: .
+      dockerfile: Dockerfile
+    volumes:
+      - .:/app
+    command: "make"
