@@ -40,3 +40,10 @@ bump:
 	@sed -E -i 's/^version(.*)/version = "$(NEW)"/' Cargo.toml
 	@make srcinfo
 
+static: clean
+	RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --target x86_64-unknown-linux-gnu
+
+static-install:
+	rm -fv /usr/bin/{aid,air} 
+	install -m 755 ./target/release/air /usr/bin
+	ln -sf /usr/bin/air /usr/bin/aid
