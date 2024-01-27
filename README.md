@@ -99,5 +99,5 @@ Local llama models :
 ### TODO
 
 - [x] Llama cpp support
-- [ ] Publish ArchLinux AUR
+- [x] Publish ArchLinux AUR
 - [ ] Any idea ?
