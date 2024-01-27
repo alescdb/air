@@ -40,6 +40,9 @@ bump:
 	@sed -E -i 's/^version(.*)/version = "$(NEW)"/' Cargo.toml
 	@make srcinfo
 
+static-docker:
+	docker-compose up --build --force-recreate --no-log-prefix
+
 static: clean
 	RUSTFLAGS='-C target-feature=+crt-static' cargo build --release --target x86_64-unknown-linux-gnu
 
