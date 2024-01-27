@@ -20,12 +20,21 @@ or
 make install
 ```
 
-Other :
+other :
 
 ```bash
 make install-home
 ```
 Note: this will install `air` in `$HOME/.cargo/bin` by default
+
+or build static binary (with docker) :
+
+```bash
+make static-docker
+make static-install
+```
+Note : `static-install` will install in `/usr/bin/air` (with a link `/usr/bin/aid`)
+
 
 ### Usage
 
