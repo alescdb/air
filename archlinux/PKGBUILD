@@ -14,7 +14,7 @@ source=('air-git::git+https://github.com/alescdb/air.git')
 provides=("air=${pkgver%%.r*}")
 b2sums=('SKIP')
 options=('!strip')
-cuda='auto'
+cuda='auto' # accepted values: auto, 1, 0
 
 prepare() {
 	cd ${pkgname}
@@ -25,16 +25,16 @@ build() {
 
 	FEATURE=""
 	if [[ "${cuda}" = "auto" ]]; then
-		if [[ -z "$(ldconfig -p | grep -i cuda)" ]]; then
-			if [[ ! -z "$CUDA_PATH" && -d "$CUDA_PATH" ]]; then
-				cuda=1
-			fi
+		if [[ ! -z "$CUDA_PATH" && -d "$CUDA_PATH" ]]; then
+			cuda=1
 		fi
 	fi
 
 	if [[ "${cuda}" = "1" ]]; then
 		FEATURE="--features cuda_support"
-		echo >&2 "Using CUDA, edit PKGBUILD to disable CUDA (cuda=0)"
+		echo "Using CUDA, edit PKGBUILD to disable CUDA (cuda=0)"
+	else
+		echo "CUDA disabled, edit PKGBUILD to force CUDA (cuda=0)"
 	fi
 	cargo build --release $FEATURE
 }
