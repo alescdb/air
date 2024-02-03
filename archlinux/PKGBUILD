@@ -2,7 +2,7 @@
 # Maintainer: alescdb
 
 pkgname=air-git
-pkgver=0.6.10
+pkgver=0.6.12
 pkgrel=1
 pkgdesc="A simple ChatGPT & Llama-cpp command line with ansi markdown display (written in Rust)"
 arch=("x86_64")
@@ -14,6 +14,7 @@ source=('air-git::git+https://github.com/alescdb/air.git')
 provides=("air=${pkgver%%.r*}")
 b2sums=('SKIP')
 options=('!strip')
+cuda='auto'
 
 prepare() {
 	cd ${pkgname}
@@ -21,7 +22,21 @@ prepare() {
 
 build() {
 	cd ${pkgname}
-	cargo build --release
+
+	FEATURE=""
+	if [[ "${cuda}" = "auto" ]]; then
+		if [[ -z "$(ldconfig -p | grep -i cuda)" ]]; then
+			if [[ ! -z "$CUDA_PATH" && -d "$CUDA_PATH" ]]; then
+				cuda=1
+			fi
+		fi
+	fi
+
+	if [[ "${cuda}" = "1" ]]; then
+		FEATURE="--features cuda_support"
+		echo >&2 "Using CUDA, edit PKGBUILD to disable CUDA (cuda=0)"
+	fi
+	cargo build --release $FEATURE
 }
 
 package() {
