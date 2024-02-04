@@ -9,25 +9,12 @@ This project is an excuse for me to discover Rust, it might (certainly) need opt
 
 ### Install
 
-On ArchLinux :
+On Arch Linux (AUR):
 ```bash
-cd archlinux
-makepkg -si
+yay -S air-git
 ```
 
-or
-```bash
-make install
-```
-
-other :
-
-```bash
-make install-home
-```
-Note: this will install `air` in `$HOME/.cargo/bin` by default
-
-or build static binary (with docker) :
+Static binary (with docker) :
 
 ```bash
 make static-docker
@@ -35,19 +22,12 @@ make static-install
 ```
 Note : `static-install` will install in `/usr/bin/air` (with a link `/usr/bin/aid`)
 
+Others :
 
-### Usage
-
+```bash
+make install-home
 ```
-Usage: air [options] <prompt>
-
-Options:
-    -l, --local name    Run local model (llama-cpp)
-    -c, --clear         Clear history
-    -v, --verbose       Verbose/debug
-    -m, --markdown      Display as markdown
-    -h, --help          Help
-```
+Note: this will install `air` in `$HOME/.cargo/bin` by default
 
 ### Setup
 
@@ -95,9 +75,3 @@ Local llama models :
 | `threads`      | Threads                            |
 | `top_k`        | The top-k sampling parameter.      |
 | `top_p`        | The top-p sampling parameter.      |
-
-### TODO
-
-- [x] Llama cpp support
-- [x] Publish ArchLinux AUR
-- [ ] Any idea ?
