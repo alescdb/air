@@ -21,7 +21,7 @@ prepare() {
 
 build() {
 	cd ${pkgname}
-	cargo build --release
+	cargo build --release --features cuda
 }
 
 package() {
