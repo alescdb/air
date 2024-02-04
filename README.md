@@ -11,7 +11,7 @@ This project is an excuse for me to discover Rust, it might (certainly) need opt
 
 On Arch Linux (AUR):
 ```bash
-yay -S air-git
+<aur-helper> -S air-git
 ```
 
 Static binary (with docker) :
