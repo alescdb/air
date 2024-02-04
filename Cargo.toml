@@ -14,8 +14,6 @@ publish = false
 
 [profile.release]
 strip = true
-debug = false
-opt-level = 3
 
 [dependencies]
 llama_cpp_rs = { version = "0.3.0", features = ["cuda"] }
