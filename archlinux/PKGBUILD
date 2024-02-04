@@ -14,6 +14,9 @@ source=('air-git::git+https://github.com/alescdb/air.git')
 provides=("air=${pkgver%%.r*}")
 b2sums=('SKIP')
 options=('!strip')
+optdepends=('cups: cuda support',
+						'cuda-tools : cuda support')
+
 
 prepare() {
 	cd ${pkgname}
