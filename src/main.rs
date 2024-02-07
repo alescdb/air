@@ -187,9 +187,9 @@ async fn main() -> Result<(), std::io::Error> {
         }
     };
 
-    if ichat.get_name() != "llama" {
-        display(options.markdown, answer.clone());
-    }
+    // if ichat.get_name() != "llama" {
+    //     display(options.markdown, answer.clone());
+    // }
 
     if answer.trim().len() > 0 {
         history.add(ichat.get_name(), &*options.prompt, &*answer.clone());
