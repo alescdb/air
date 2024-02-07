@@ -5,6 +5,7 @@ pub struct ErrorMessage {
     message: String,
 }
 
+#[allow(dead_code)]
 impl ErrorMessage {
     pub fn new(message: &str) -> ErrorMessage {
         ErrorMessage {

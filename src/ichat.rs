@@ -1,6 +1,7 @@
 use async_trait::async_trait;
 use serde::{Deserialize, Serialize};
 
+
 #[derive(PartialEq, Serialize, Deserialize, Debug, Clone)]
 pub enum Role {
     #[serde(rename = "user")]
@@ -43,3 +44,4 @@ pub trait IChat {
         history: Option<Vec<Message>>,
     ) -> Result<String, Box<dyn std::error::Error>>;
 }
+

@@ -48,7 +48,7 @@ impl IChat for LLamaChat {
             Ok(llama) => {
                 self.open_stderr();
                 llama
-            },
+            }
             Err(e) => {
                 self.open_stderr();
                 return Err(e);
@@ -63,6 +63,7 @@ impl IChat for LLamaChat {
             top_p: self.setup.top_p.unwrap_or(def.top_p),
             temperature: self.setup.temperature.unwrap_or(def.temperature),
             token_callback: Some(Box::new(|token: String| {
+                // TODO: Find a way to call self.display() here
                 print!("{}", token);
                 std::io::stdout().flush().unwrap();
                 true
@@ -82,7 +83,7 @@ impl IChat for LLamaChat {
 
         let answer = llama.predict(pfmt, predict_options)?;
         println!("");
-        
+
         return Ok(answer);
     }
 }

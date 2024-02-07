@@ -1,8 +1,11 @@
-use crate::error::ErrorMessage;
-use crate::ichat::{IChat, Message, Role};
+use crate::{
+    ichat::{IChat, Message, Role},
+};
 use async_trait::async_trait;
-use reqwest::{Client, StatusCode};
+use reqwest::Client;
 use serde::{Deserialize, Serialize};
+use std::io::Write;
+use tokio_stream::StreamExt;
 
 const HEADER_AUTHORIZATION: &str = "Authorization";
 const HEADER_CONTENT_TYPE: &str = "Content-Type";
@@ -13,6 +16,7 @@ const OPENAI_URL: &str = "https://api.openai.com/v1/chat/completions";
 pub struct OpenAICompletion<'a> {
     model: &'a str,
     messages: Vec<Message>,
+    stream: bool,
 }
 
 #[derive(Deserialize, Debug)]
@@ -49,6 +53,49 @@ pub struct OpenAI {
     pub apikey: String,
     pub model: String,
     pub system: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+pub struct StreamDelta {
+    content: Option<String>,
+}
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct StreamChoice {
+    index: Option<u32>,
+    delta: Option<StreamDelta>,
+}
+
+#[allow(dead_code)]
+#[derive(Deserialize, Debug)]
+pub struct StreamChunk {
+    id: Option<String>,
+    object: Option<String>,
+    created: Option<u32>,
+    model: Option<String>,
+    system_fingerprint: Option<String>,
+    choices: Option<Vec<StreamChoice>>,
+}
+
+fn parse_data(line: &str) -> Result<String, Box<dyn std::error::Error>> {
+    // println!("LINE => '{}'", line);
+    let mut message = String::new();
+    if line.starts_with("data: ") && !line.starts_with("data: [DONE]") {
+        let json: StreamChunk = serde_json::from_str(&line[6..])?;
+
+        if let Some(choices) = json.choices {
+            for c in choices {
+                if let Some(delta) = c.delta {
+                    if let Some(content) = delta.content {
+                        print!("{}", content);
+                        message.push_str(&content);
+                        std::io::stdout().flush().unwrap();
+                    }
+                }
+            }
+        }
+    }
+    Ok(message)
 }
 
 #[async_trait]
@@ -94,6 +141,7 @@ impl IChat for OpenAI {
 
         let completion = OpenAICompletion {
             model: &self.model,
+            stream: true,
             messages,
         };
         let serialized: String = serde_json::to_string_pretty(&completion)?;
@@ -108,30 +156,32 @@ impl IChat for OpenAI {
             .send()
             .await?;
 
-        let status_code = response.status();
-        let json = response.json::<OpenAIResponse>().await?;
+        let mut stream = response.bytes_stream();
+        let mut message: String = String::new();
+        let mut buffer: Vec<u8> = vec![];
 
-        log::debug!("Status Code: {:?}\n", status_code);
-        log::debug!("Response:\n{:?}\n", json);
-
-        if status_code >= StatusCode::BAD_REQUEST {
-            if let Some(e) = json.error {
-                return Err(Box::new(ErrorMessage::new(&e.message.unwrap())));
+        while let Some(chunk) = stream.next().await {
+            match chunk {
+                Ok(bytes) => {
+                    for c in bytes {
+                        if c == b'\n' {
+                            if buffer.len() > 0 {
+                                let line = parse_data(&String::from_utf8(buffer.clone())?)?;
+                                message.push_str(&line);
+                                message.push('\n');
+                            }
+                            buffer = vec![];
+                        } else {
+                            buffer.push(c);
+                        }
+                    }
+                }
+                Err(e) => {
+                    log::error!("{}", e);
+                }
             }
-            return Err(Box::new(ErrorMessage::new(&format!(
-                "API Error status code : {}",
-                status_code
-            ))));
         }
-
-        if let Some(choices) = json.choices {
-            if choices.len() == 0 {
-                return Err(Box::new(ErrorMessage::new("Empty result")));
-            }
-            return Ok(choices.first().unwrap().message.content.clone());
-        }
-
-        return Err(Box::new(ErrorMessage::new("Choices not found in result")));
+        Ok(message)
     }
 }
 

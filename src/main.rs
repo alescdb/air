@@ -7,6 +7,7 @@ mod options;
 mod path;
 mod scan;
 mod setup;
+mod displayer;
 
 use crate::history::History;
 use crate::ichat::IChat;
@@ -85,6 +86,9 @@ fn init_log(verbose: bool) {
 
 #[tokio::main]
 async fn main() -> Result<(), std::io::Error> {
+    // let mut displayer = Displayer::new();
+    // displayer.display("input");
+
     let mut setup: Setup = match Setup::new() {
         Ok(setup) => setup,
         Err(e) => {
