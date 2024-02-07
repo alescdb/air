@@ -19,6 +19,7 @@ use setup::{LLamaSetup, Setup};
 use std::io::Write;
 use termimad::{crossterm::style::Stylize, *};
 
+#[allow(dead_code)]
 fn display(markdown: bool, content: String) {
     if markdown {
         let skin = MadSkin::default();
